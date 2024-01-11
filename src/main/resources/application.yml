@@ -1,6 +1,6 @@
 spring:
   application:
-    name: board-answer-api-service
+    name: answer-api-service
   rabbitmq:
     host: 127.0.0.1
     port: 5672

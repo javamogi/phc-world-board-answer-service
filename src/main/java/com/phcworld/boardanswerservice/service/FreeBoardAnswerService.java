@@ -37,7 +37,7 @@ public class FreeBoardAnswerService {
 	public FreeBoardAnswerResponseDto register(FreeBoardAnswerRequestDto request, String token) {
 
 		boolean existedFreeBoard = Boolean.TRUE.equals(webClient.build()
-				.mutate().baseUrl(env.getProperty("user_service.url"))
+				.mutate().baseUrl(env.getProperty("board_service.url"))
 				.build()
 				.get()
 				.uri(uriBuilder -> uriBuilder
@@ -47,7 +47,7 @@ public class FreeBoardAnswerService {
 				.retrieve()
 				.bodyToMono(Boolean.class)
 				.block());
-		if (existedFreeBoard) {
+		if (!existedFreeBoard) {
 			throw new NotFoundException();
 		}
 
@@ -58,6 +58,7 @@ public class FreeBoardAnswerService {
 				.contents(request.contents())
 				.build();
 		freeBoardAnswerRepository.save(freeBoardAnswer);
+
 
 		UserResponseDto user = webClient.build()
 				.mutate().baseUrl(env.getProperty("user_service.url"))

@@ -13,13 +13,13 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/freeboards")
+@RequestMapping("/answers")
 @RequiredArgsConstructor
 public class FreeBoardAnswerApiController {
 	
 	private final FreeBoardAnswerService freeBoardAnswerService;
 	
-	@PostMapping("/answers")
+	@PostMapping("")
 	@ResponseStatus(value = HttpStatus.CREATED)
 	public FreeBoardAnswerResponseDto register(@RequestBody FreeBoardAnswerRequestDto requestDto,
 											   HttpServletRequest request) {
@@ -27,26 +27,26 @@ public class FreeBoardAnswerApiController {
 		return freeBoardAnswerService.register(requestDto, token);
 	}
 	
-	@GetMapping("/answers/{id}")
+	@GetMapping("/{id}")
 	public FreeBoardAnswerResponseDto getFreeBoardAnswer(@PathVariable(name = "id") Long id,
 														 HttpServletRequest request) {
 		String token = request.getHeader("Authorization");
 		return freeBoardAnswerService.getFreeBoardAnswer(id, token);
 	}
 	
-	@PatchMapping("/answers")
+	@PatchMapping("")
 	public FreeBoardAnswerResponseDto updateFreeBoardAnswer(@RequestBody FreeBoardAnswerRequestDto requestDto,
 															HttpServletRequest request) {
 		String token = request.getHeader("Authorization");
 		return freeBoardAnswerService.updateFreeBoardAnswer(requestDto, token);
 	}
 	
-	@DeleteMapping("/answers/{id}")
+	@DeleteMapping("/{id}")
 	public SuccessResponseDto deleteFreeBoardAnswer(@PathVariable(name = "id") Long id) {
 		return freeBoardAnswerService.deleteFreeBoardAnswer(id);
 	}
 
-	@GetMapping("/{freeboardId}/answers")
+	@GetMapping("/freeboards/{freeboardId}")
 	public List<FreeBoardAnswerResponseDto> getFreeBoardAnswers(@PathVariable(name = "freeboardId") Long freeboardId,
 																HttpServletRequest request){
 		String token = request.getHeader("Authorization");
