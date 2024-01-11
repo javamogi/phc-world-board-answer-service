@@ -1,0 +1,5 @@
+package com.phcworld.boardanswerservice.domain;
+
+public enum Authority {
+    ROLE_USER, ROLE_ADMIN
+}

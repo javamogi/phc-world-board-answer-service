@@ -1,0 +1,8 @@
+spring:
+  cloud:
+    config:
+      uri: http://127.0.0.1:8888
+#      name: phc-world-config-service
+      name: board-service
+  profiles:
+    active: dev

@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: board-answer-api-service
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+
+  profiles:
+    active: dev
+
+server:
+  port: 0
+  servlet:
+    encoding:
+      charset: UTF-8
+      force-request: true
+      force: true
+      force-response: true
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans, busrefresh
