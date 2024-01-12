@@ -21,7 +21,8 @@ import java.time.LocalDateTime;
 @Builder
 @Accessors(chain = true)
 @EntityListeners(AuditingEntityListener.class)
-@Table(indexes = {@Index(name = "idx__writer_id_create_date", columnList = "writer_id, createDate"),
+@Table(name = "answers",
+		indexes = {@Index(name = "idx__writer_id_create_date", columnList = "writer_id, createDate"),
 		@Index(name = "idx__free_board_id_create_date", columnList = "free_board_id, createDate")})
 @DynamicUpdate
 public class FreeBoardAnswer {

@@ -9,6 +9,8 @@ import com.phcworld.boardanswerservice.dto.UserResponseDto;
 import com.phcworld.boardanswerservice.exception.model.NotFoundException;
 import com.phcworld.boardanswerservice.exception.model.NotMatchUserException;
 import com.phcworld.boardanswerservice.exception.model.UnauthorizedException;
+import com.phcworld.boardanswerservice.messagequeue.AnswerProducer;
+import com.phcworld.boardanswerservice.messagequeue.KafkaProducer;
 import com.phcworld.boardanswerservice.repository.FreeBoardAnswerRepository;
 import com.phcworld.boardanswerservice.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +35,8 @@ public class FreeBoardAnswerService {
 	private final FreeBoardAnswerRepository freeBoardAnswerRepository;
 	private final Environment env;
 	private final WebClient.Builder webClient;
+	private final KafkaProducer kafkaProducer;
+	private final AnswerProducer answerProducer;
 
 
 	public FreeBoardAnswerResponseDto register(FreeBoardAnswerRequestDto request, String token) {
@@ -56,9 +61,13 @@ public class FreeBoardAnswerService {
 				.writerId(userId)
 				.freeBoardId(request.boardId())
 				.contents(request.contents())
+				.createDate(LocalDateTime.now())
+				.updateDate(LocalDateTime.now())
 				.build();
-		freeBoardAnswerRepository.save(freeBoardAnswer);
+//		freeBoardAnswerRepository.save(freeBoardAnswer);
 
+		kafkaProducer.send("board-topic", freeBoardAnswer);
+		answerProducer.send("answers", freeBoardAnswer);
 
 		UserResponseDto user = webClient.build()
 				.mutate().baseUrl(env.getProperty("user_service.url"))
