@@ -46,20 +46,20 @@ public class AnswerProducer {
                 .update_date(answer.getUpdateDate().atZone(zoneid).toInstant().toEpochMilli())
                 .build();
 
-        KafkaAnswerDto kafkaOrderDto = KafkaAnswerDto.builder()
+        KafkaAnswerDto kafkaAnswerDto = KafkaAnswerDto.builder()
                 .schema(schema)
                 .payload(payload)
                 .build();
 
         String jsonInString = "";
         try {
-            jsonInString = mapper.writeValueAsString(kafkaOrderDto);
+            jsonInString = mapper.writeValueAsString(kafkaAnswerDto);
         } catch (JsonProcessingException e){
             e.printStackTrace();
         }
 
         kafkaTemplate.send(topic, jsonInString);
-        log.info("Answer Producer sent data from the Answer microservice: {}", kafkaOrderDto);
+        log.info("Answer Producer sent data from the Answer microservice: {}", kafkaAnswerDto);
 
         return answer;
     }
