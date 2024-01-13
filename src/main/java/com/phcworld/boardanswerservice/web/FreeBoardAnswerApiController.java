@@ -27,11 +27,11 @@ public class FreeBoardAnswerApiController {
 		return freeBoardAnswerService.register(requestDto, token);
 	}
 	
-	@GetMapping("/{id}")
-	public FreeBoardAnswerResponseDto getFreeBoardAnswer(@PathVariable(name = "id") Long id,
+	@GetMapping("/{answerId}")
+	public FreeBoardAnswerResponseDto getFreeBoardAnswer(@PathVariable(name = "answerId") String answerId,
 														 HttpServletRequest request) {
 		String token = request.getHeader("Authorization");
-		return freeBoardAnswerService.getFreeBoardAnswer(id, token);
+		return freeBoardAnswerService.getFreeBoardAnswer(answerId, token);
 	}
 	
 	@PatchMapping("")
@@ -41,13 +41,13 @@ public class FreeBoardAnswerApiController {
 		return freeBoardAnswerService.updateFreeBoardAnswer(requestDto, token);
 	}
 	
-	@DeleteMapping("/{id}")
-	public SuccessResponseDto deleteFreeBoardAnswer(@PathVariable(name = "id") Long id) {
-		return freeBoardAnswerService.deleteFreeBoardAnswer(id);
+	@DeleteMapping("/{answerId}")
+	public SuccessResponseDto deleteFreeBoardAnswer(@PathVariable(name = "answerId") String answerId) {
+		return freeBoardAnswerService.deleteFreeBoardAnswer(answerId);
 	}
 
 	@GetMapping("/freeboards/{freeboardId}")
-	public List<FreeBoardAnswerResponseDto> getFreeBoardAnswers(@PathVariable(name = "freeboardId") Long freeboardId,
+	public List<FreeBoardAnswerResponseDto> getFreeBoardAnswers(@PathVariable(name = "freeboardId") String freeboardId,
 																HttpServletRequest request){
 		String token = request.getHeader("Authorization");
 		return freeBoardAnswerService.getFreeBoardAnswerList(freeboardId, token);

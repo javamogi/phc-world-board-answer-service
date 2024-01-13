@@ -24,8 +24,9 @@ public class AnswerProducer {
     private final ObjectMapper mapper;
 
     List<Field> fields = Arrays.asList(
+            new Field("string", false, "answer_id"),
             new Field("string", false, "writer_id"),
-            new Field("int64", false, "free_board_id"),
+            new Field("string", false, "free_board_id"),
             new Field("string", true, "contents"),
             new Field("int64", true, "create_date"){public String name="org.apache.kafka.connect.data.Timestamp"; public int version = 1;},
             new Field("int64", true, "update_date"){public String name="org.apache.kafka.connect.data.Timestamp"; public int version = 1;});
@@ -39,6 +40,7 @@ public class AnswerProducer {
     public FreeBoardAnswer send(String topic, FreeBoardAnswer answer){
         ZoneId zoneid = ZoneId.of("Asia/Seoul");
         Payload payload = Payload.builder()
+                .answer_id(answer.getAnswerId())
                 .writer_id(answer.getWriterId())
                 .free_board_id(answer.getFreeBoardId())
                 .contents(answer.getContents())

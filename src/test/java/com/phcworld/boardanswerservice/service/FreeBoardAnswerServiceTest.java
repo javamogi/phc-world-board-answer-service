@@ -31,10 +31,12 @@ class FreeBoardAnswerServiceTest {
 
     private static String token;
 
+    private static String boardId;
+    private static String answerId;
+
     @BeforeAll
     static void 회원_초기화(){
         user = UserResponseDto.builder()
-                .id(1L)
                 .email("test@test.test")
                 .name("테스트")
                 .createDate("방금전")
@@ -43,23 +45,26 @@ class FreeBoardAnswerServiceTest {
 
         userId = UUID.randomUUID().toString();
         token = "token";
+        boardId = UUID.randomUUID().toString();
+        answerId = UUID.randomUUID().toString();
     }
 
     @Test
     void 답변_등록() {
         FreeBoardAnswerRequestDto request = FreeBoardAnswerRequestDto.builder()
-                .boardId(1L)
+                .boardId(boardId)
                 .contents("contents")
                 .build();
         FreeBoardAnswer freeBoardAnswer = FreeBoardAnswer.builder()
                 .id(1L)
+                .answerId(answerId)
                 .writerId(userId)
-                .freeBoardId(1L)
+                .freeBoardId(boardId)
                 .contents(request.contents())
                 .build();
 
         FreeBoardAnswerResponseDto response =  FreeBoardAnswerResponseDto.builder()
-                .id(freeBoardAnswer.getId())
+                .answerId(freeBoardAnswer.getAnswerId())
                 .writer(user)
                 .contents(freeBoardAnswer.getContents())
                 .updatedDate(freeBoardAnswer.getFormattedUpdateDate())
@@ -73,7 +78,7 @@ class FreeBoardAnswerServiceTest {
     @Test
     void 답변_등록_오류_없는_게시글() {
         FreeBoardAnswerRequestDto request = FreeBoardAnswerRequestDto.builder()
-                .boardId(1L)
+                .boardId(boardId)
                 .contents("contents")
                 .build();
         when(answerService.register(request, token)).thenThrow(NotFoundException.class);
@@ -86,46 +91,47 @@ class FreeBoardAnswerServiceTest {
     void 하나의_답변_조회() {
         FreeBoardAnswer freeBoardAnswer = FreeBoardAnswer.builder()
                 .id(1L)
+                .answerId(answerId)
                 .writerId(userId)
-                .freeBoardId(1L)
+                .freeBoardId(boardId)
                 .contents("answer contents")
                 .build();
 
         FreeBoardAnswerResponseDto response = FreeBoardAnswerResponseDto.builder()
-                .id(freeBoardAnswer.getId())
+                .answerId(freeBoardAnswer.getAnswerId())
                 .writer(user)
                 .contents(freeBoardAnswer.getContents())
                 .updatedDate(freeBoardAnswer.getFormattedUpdateDate())
                 .build();
 
-        when(answerService.getFreeBoardAnswer(1L, token)).thenReturn(response);
-        FreeBoardAnswerResponseDto result = answerService.getFreeBoardAnswer(1L, token);
+        when(answerService.getFreeBoardAnswer(answerId, token)).thenReturn(response);
+        FreeBoardAnswerResponseDto result = answerService.getFreeBoardAnswer(answerId, token);
         assertThat(response).isEqualTo(result);
     }
 
     @Test
     void 하나의_답변_조회_오류_없는_답변() {
-        when(answerService.getFreeBoardAnswer(1L, token)).thenThrow(NotFoundException.class);
+        when(answerService.getFreeBoardAnswer(answerId, token)).thenThrow(NotFoundException.class);
         Assertions.assertThrows(NotFoundException.class, () -> {
-            answerService.getFreeBoardAnswer(1L, token);
+            answerService.getFreeBoardAnswer(answerId, token);
         });
     }
 
     @Test
     void 답변_수정_성공() {
         FreeBoardAnswerRequestDto request = FreeBoardAnswerRequestDto.builder()
-                .answerId(1L)
+                .answerId(answerId)
                 .contents("contents")
                 .build();
         FreeBoardAnswer freeBoardAnswer = FreeBoardAnswer.builder()
                 .id(1L)
                 .writerId(userId)
-                .freeBoardId(1L)
+                .freeBoardId(boardId)
                 .contents(request.contents())
                 .build();
 
         FreeBoardAnswerResponseDto response = FreeBoardAnswerResponseDto.builder()
-                .id(freeBoardAnswer.getId())
+                .answerId(freeBoardAnswer.getAnswerId())
                 .writer(user)
                 .contents(freeBoardAnswer.getContents())
                 .updatedDate(freeBoardAnswer.getFormattedUpdateDate())
@@ -139,7 +145,7 @@ class FreeBoardAnswerServiceTest {
     @Test
     void 답변_수정_실패_없는_답변() {
         FreeBoardAnswerRequestDto request = FreeBoardAnswerRequestDto.builder()
-                .answerId(1L)
+                .answerId(answerId)
                 .contents("contents")
                 .build();
         when(answerService.updateFreeBoardAnswer(request, token)).thenThrow(NotFoundException.class);
@@ -151,7 +157,7 @@ class FreeBoardAnswerServiceTest {
     @Test
     void 답변_수정_실패_다른_작성자() {
         FreeBoardAnswerRequestDto request = FreeBoardAnswerRequestDto.builder()
-                .answerId(1L)
+                .answerId(answerId)
                 .contents("contents")
                 .build();
         when(answerService.updateFreeBoardAnswer(request, token)).thenThrow(NotMatchUserException.class);
@@ -167,8 +173,8 @@ class FreeBoardAnswerServiceTest {
                 .statusCode(200)
                 .build();
 
-        when(answerService.deleteFreeBoardAnswer(1L)).thenReturn(response);
-        SuccessResponseDto result = answerService.deleteFreeBoardAnswer(1L);
+        when(answerService.deleteFreeBoardAnswer(answerId)).thenReturn(response);
+        SuccessResponseDto result = answerService.deleteFreeBoardAnswer(answerId);
         assertThat(response).isEqualTo(result);
     }
 }

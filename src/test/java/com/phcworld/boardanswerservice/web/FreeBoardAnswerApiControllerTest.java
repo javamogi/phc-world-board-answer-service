@@ -62,7 +62,7 @@ class FreeBoardAnswerApiControllerTest {
     @Test
     void 답변_등록_성공() throws Exception {
         FreeBoardAnswerRequestDto requestDto = FreeBoardAnswerRequestDto.builder()
-                .boardId(1L)
+                .boardId("1111")
                 .contents("contents")
                 .build();
         String request = objectMapper.writeValueAsString(requestDto);
@@ -79,7 +79,7 @@ class FreeBoardAnswerApiControllerTest {
     @Test
     void 답변_등록_실패_없는_게시물() throws Exception {
         FreeBoardAnswerRequestDto requestDto = FreeBoardAnswerRequestDto.builder()
-                .boardId(1000L)
+                .boardId("9999")
                 .contents("contents")
                 .build();
         String request = objectMapper.writeValueAsString(requestDto);
@@ -116,7 +116,7 @@ class FreeBoardAnswerApiControllerTest {
     @Test
     void 답변_수정_성공() throws Exception {
         FreeBoardAnswerRequestDto requestDto = FreeBoardAnswerRequestDto.builder()
-                .answerId(1L)
+                .answerId("1111")
                 .contents("contents 수정")
                 .build();
         String request = objectMapper.writeValueAsString(requestDto);
@@ -133,7 +133,7 @@ class FreeBoardAnswerApiControllerTest {
     @Test
     void 답변_수정_실패_없는_답변() throws Exception {
         FreeBoardAnswerRequestDto requestDto = FreeBoardAnswerRequestDto.builder()
-                .answerId(2L)
+                .answerId("9999")
                 .contents("contents 수정")
                 .build();
         String request = objectMapper.writeValueAsString(requestDto);
@@ -159,7 +159,7 @@ class FreeBoardAnswerApiControllerTest {
         String accessToken = "Bearer " + tokenProvider.generateAccessToken(authentication, now);
 
         FreeBoardAnswerRequestDto requestDto = FreeBoardAnswerRequestDto.builder()
-                .answerId(1L)
+                .answerId("1111")
                 .contents("contents 수정")
                 .build();
         String request = objectMapper.writeValueAsString(requestDto);

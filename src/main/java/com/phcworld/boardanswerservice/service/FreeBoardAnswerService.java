@@ -6,6 +6,7 @@ import com.phcworld.boardanswerservice.dto.FreeBoardAnswerRequestDto;
 import com.phcworld.boardanswerservice.dto.FreeBoardAnswerResponseDto;
 import com.phcworld.boardanswerservice.dto.SuccessResponseDto;
 import com.phcworld.boardanswerservice.dto.UserResponseDto;
+import com.phcworld.boardanswerservice.exception.model.DuplicationException;
 import com.phcworld.boardanswerservice.exception.model.NotFoundException;
 import com.phcworld.boardanswerservice.exception.model.NotMatchUserException;
 import com.phcworld.boardanswerservice.exception.model.UnauthorizedException;
@@ -14,6 +15,8 @@ import com.phcworld.boardanswerservice.messagequeue.KafkaProducer;
 import com.phcworld.boardanswerservice.repository.FreeBoardAnswerRepository;
 import com.phcworld.boardanswerservice.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +28,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 
 @Service
@@ -55,9 +59,13 @@ public class FreeBoardAnswerService {
 		if (!existedFreeBoard) {
 			throw new NotFoundException();
 		}
+		String answerId = UUID.randomUUID().toString();
+		freeBoardAnswerRepository.findByAnswerId(answerId)
+				.orElseThrow(DuplicationException::new);
 
 		String userId = SecurityUtil.getCurrentMemberId();
 		FreeBoardAnswer freeBoardAnswer = FreeBoardAnswer.builder()
+				.answerId(answerId)
 				.writerId(userId)
 				.freeBoardId(request.boardId())
 				.contents(request.contents())
@@ -69,35 +77,23 @@ public class FreeBoardAnswerService {
 		kafkaProducer.send("board-topic", freeBoardAnswer);
 		answerProducer.send("answers", freeBoardAnswer);
 
-		UserResponseDto user = webClient.build()
-				.mutate().baseUrl(env.getProperty("user_service.url"))
-				.build()
-				.get()
-				.uri(uriBuilder -> uriBuilder
-						.path("/{id}")
-						.build(freeBoardAnswer.getWriterId()))
-				.header("Authorization", token)
-				.retrieve()
-				.bodyToMono(UserResponseDto.class)
-				.block();
+		UserResponseDto user = getUserResponseDto(token, freeBoardAnswer);
 
 		if(user == null){
 			throw new NotFoundException();
 		}
 
 		return FreeBoardAnswerResponseDto.builder()
-				.id(freeBoardAnswer.getId())
+				.answerId(answerId)
 				.writer(user)
 				.contents(freeBoardAnswer.getContents())
 				.updatedDate(freeBoardAnswer.getFormattedUpdateDate())
 				.build();
 	}
-	
-	public FreeBoardAnswerResponseDto getFreeBoardAnswer(Long answerId, String token) {
-		FreeBoardAnswer freeBoardAnswer = freeBoardAnswerRepository.findById(answerId)
-				.orElseThrow(NotFoundException::new);
 
-		UserResponseDto user = webClient.build()
+	@Nullable
+	private UserResponseDto getUserResponseDto(String token, FreeBoardAnswer freeBoardAnswer) {
+		return webClient.build()
 				.mutate().baseUrl(env.getProperty("user_service.url"))
 				.build()
 				.get()
@@ -108,9 +104,16 @@ public class FreeBoardAnswerService {
 				.retrieve()
 				.bodyToMono(UserResponseDto.class)
 				.block();
+	}
+
+	public FreeBoardAnswerResponseDto getFreeBoardAnswer(String answerId, String token) {
+		FreeBoardAnswer freeBoardAnswer = freeBoardAnswerRepository.findByAnswerId(answerId)
+				.orElseThrow(NotFoundException::new);
+
+		UserResponseDto user = getUserResponseDto(token, freeBoardAnswer);
 
 		return FreeBoardAnswerResponseDto.builder()
-				.id(freeBoardAnswer.getId())
+				.answerId(freeBoardAnswer.getAnswerId())
 				.writer(user)
 				.contents(freeBoardAnswer.getContents())
 				.updatedDate(freeBoardAnswer.getFormattedUpdateDate())
@@ -118,7 +121,7 @@ public class FreeBoardAnswerService {
 	}
 	
 	public FreeBoardAnswerResponseDto updateFreeBoardAnswer(FreeBoardAnswerRequestDto request, String token) {
-		FreeBoardAnswer answer = freeBoardAnswerRepository.findById(request.answerId())
+		FreeBoardAnswer answer = freeBoardAnswerRepository.findByAnswerId(request.answerId())
 				.orElseThrow(NotFoundException::new);
 		String userId = SecurityUtil.getCurrentMemberId();
 
@@ -128,28 +131,18 @@ public class FreeBoardAnswerService {
 
 		answer.update(request.contents());
 
-		UserResponseDto user = webClient.build()
-				.mutate().baseUrl(env.getProperty("user_service.url"))
-				.build()
-				.get()
-				.uri(uriBuilder -> uriBuilder
-						.path("/{id}")
-						.build(answer.getWriterId()))
-				.header("Authorization", token)
-				.retrieve()
-				.bodyToMono(UserResponseDto.class)
-				.block();
+		UserResponseDto user = getUserResponseDto(token, answer);
 
 		return  FreeBoardAnswerResponseDto.builder()
-				.id(answer.getId())
+				.answerId(answer.getAnswerId())
 				.writer(user)
 				.contents(answer.getContents())
 				.updatedDate(answer.getFormattedUpdateDate())
 				.build();
 	}
 	
-	public SuccessResponseDto deleteFreeBoardAnswer(Long answerId) {
-		FreeBoardAnswer freeBoardAnswer = freeBoardAnswerRepository.findById(answerId)
+	public SuccessResponseDto deleteFreeBoardAnswer(String answerId) {
+		FreeBoardAnswer freeBoardAnswer = freeBoardAnswerRepository.findByAnswerId(answerId)
 				.orElseThrow(NotFoundException::new);
 		String userId = SecurityUtil.getCurrentMemberId();
 		Authority authorities = SecurityUtil.getAuthorities();
@@ -157,7 +150,7 @@ public class FreeBoardAnswerService {
 			throw new UnauthorizedException();
 		}
 
-		freeBoardAnswerRepository.deleteById(answerId);
+		freeBoardAnswerRepository.delete(freeBoardAnswer);
 		
 		return SuccessResponseDto.builder()
 				.message("삭제성공")
@@ -165,7 +158,7 @@ public class FreeBoardAnswerService {
 				.build();
 	}
 
-	public List<FreeBoardAnswerResponseDto> getFreeBoardAnswerList(Long boardId, String token) {
+	public List<FreeBoardAnswerResponseDto> getFreeBoardAnswerList(String boardId, String token) {
 		List<FreeBoardAnswer> freeBoardAnswers = freeBoardAnswerRepository.findByFreeBoardId(boardId);
 
 		List<String> userIds = freeBoardAnswers.stream()
@@ -173,7 +166,25 @@ public class FreeBoardAnswerService {
 				.distinct()
 				.toList();
 
-		Mono<Map<String, UserResponseDto>> response = webClient.build()
+		Mono<Map<String, UserResponseDto>> response = getUserResponseDtoList(token, userIds);
+
+		Map<String, UserResponseDto> users = response.block();
+
+		return freeBoardAnswers.stream()
+				.map(a -> {
+					return FreeBoardAnswerResponseDto.builder()
+							.answerId(a.getAnswerId())
+							.writer(users.get(a.getWriterId()))
+							.contents(a.getContents())
+							.updatedDate(a.getFormattedUpdateDate())
+							.build();
+				})
+				.toList();
+	}
+
+	@NotNull
+	private Mono<Map<String, UserResponseDto>> getUserResponseDtoList(String token, List<String> userIds) {
+		return webClient.build()
 				.mutate().baseUrl(env.getProperty("user_service.url"))
 				.build()
 				.get()
@@ -184,19 +195,6 @@ public class FreeBoardAnswerService {
 				.header(HttpHeaders.AUTHORIZATION, token)
 				.retrieve()
 				.bodyToMono(new ParameterizedTypeReference<Map<String, UserResponseDto>>() {});
-
-		Map<String, UserResponseDto> users = response.block();
-
-		return freeBoardAnswers.stream()
-				.map(a -> {
-					return FreeBoardAnswerResponseDto.builder()
-							.id(a.getId())
-							.writer(users.get(a.getWriterId()))
-							.contents(a.getContents())
-							.updatedDate(a.getFormattedUpdateDate())
-							.build();
-				})
-				.toList();
 	}
-	
+
 }

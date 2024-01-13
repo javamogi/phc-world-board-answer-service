@@ -31,9 +31,14 @@ public class FreeBoardAnswer {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@Column(nullable = false, unique = true)
+	private String answerId;
+
+	@Column(nullable = false)
 	private String writerId;
 
-	private Long freeBoardId;
+	@Column(nullable = false)
+	private String freeBoardId;
 	
 	@Lob
 	private String contents;
