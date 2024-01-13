@@ -60,8 +60,11 @@ public class FreeBoardAnswerService {
 			throw new NotFoundException();
 		}
 		String answerId = UUID.randomUUID().toString();
-		freeBoardAnswerRepository.findByAnswerId(answerId)
-				.orElseThrow(DuplicationException::new);
+		boolean exist = freeBoardAnswerRepository.findByAnswerId(answerId)
+				.isPresent();
+		if(exist){
+			throw new DuplicationException();
+		}
 
 		String userId = SecurityUtil.getCurrentMemberId();
 		FreeBoardAnswer freeBoardAnswer = FreeBoardAnswer.builder()
