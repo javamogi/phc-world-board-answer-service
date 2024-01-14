@@ -66,6 +66,8 @@ dependencies {
     implementation 'org.springframework.kafka:spring-kafka'
 
     implementation 'com.mysql:mysql-connector-j:8.2.0'
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 }
 
 dependencyManagement {

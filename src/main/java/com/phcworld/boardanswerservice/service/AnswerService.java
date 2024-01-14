@@ -2,8 +2,8 @@ package com.phcworld.boardanswerservice.service;
 
 import com.phcworld.boardanswerservice.domain.Authority;
 import com.phcworld.boardanswerservice.domain.FreeBoardAnswer;
-import com.phcworld.boardanswerservice.dto.FreeBoardAnswerRequestDto;
-import com.phcworld.boardanswerservice.dto.FreeBoardAnswerResponseDto;
+import com.phcworld.boardanswerservice.dto.AnswerRequestDto;
+import com.phcworld.boardanswerservice.dto.AnswerResponseDto;
 import com.phcworld.boardanswerservice.dto.SuccessResponseDto;
 import com.phcworld.boardanswerservice.dto.UserResponseDto;
 import com.phcworld.boardanswerservice.exception.model.DuplicationException;
@@ -15,8 +15,11 @@ import com.phcworld.boardanswerservice.messagequeue.KafkaProducer;
 import com.phcworld.boardanswerservice.repository.FreeBoardAnswerRepository;
 import com.phcworld.boardanswerservice.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
@@ -26,27 +29,34 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 
 @Service
-@Transactional
 @RequiredArgsConstructor
-public class FreeBoardAnswerService {
+@Slf4j
+public class AnswerService {
 	
 	private final FreeBoardAnswerRepository freeBoardAnswerRepository;
 	private final Environment env;
 	private final WebClient.Builder webClient;
 	private final KafkaProducer kafkaProducer;
 	private final AnswerProducer answerProducer;
+	private final CircuitBreakerFactory circuitBreakerFactory;
 
 
-	public FreeBoardAnswerResponseDto register(FreeBoardAnswerRequestDto request, String token) {
+	public AnswerResponseDto register(AnswerRequestDto request, String token) {
 
-		boolean existedFreeBoard = Boolean.TRUE.equals(webClient.build()
-				.mutate().baseUrl(env.getProperty("board_service.url"))
+		log.info("Before call boards microservice");
+		CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
+		boolean existedFreeBoard = Boolean.TRUE.equals(
+				circuitBreaker.run(() ->
+				webClient.build()
+				.mutate().baseUrl("http://localhost:8080/boards")
+//				.mutate().baseUrl(env.getProperty("board_service.url"))
 				.build()
 				.get()
 				.uri(uriBuilder -> uriBuilder
@@ -55,7 +65,11 @@ public class FreeBoardAnswerService {
 				.header("Authorization", token)
 				.retrieve()
 				.bodyToMono(Boolean.class)
-				.block());
+				.block(),
+						throwable -> false)
+		);
+		log.info("After call boards microservice");
+
 		if (!existedFreeBoard) {
 			throw new NotFoundException();
 		}
@@ -80,13 +94,23 @@ public class FreeBoardAnswerService {
 		kafkaProducer.send("board-topic", freeBoardAnswer);
 		answerProducer.send("answers", freeBoardAnswer);
 
-		UserResponseDto user = getUserResponseDto(token, freeBoardAnswer);
+		log.info("Before call users microservice");
+		UserResponseDto user = circuitBreaker.run(
+				() -> getUserResponseDto(token, freeBoardAnswer.getWriterId()),
+				throwable -> UserResponseDto.builder()
+						.email("")
+						.name("")
+						.createDate("")
+						.profileImage("")
+						.userId("")
+						.build());
+		log.info("After called users microservice");
 
 		if(user == null){
 			throw new NotFoundException();
 		}
 
-		return FreeBoardAnswerResponseDto.builder()
+		return AnswerResponseDto.builder()
 				.answerId(answerId)
 				.writer(user)
 				.contents(freeBoardAnswer.getContents())
@@ -95,35 +119,48 @@ public class FreeBoardAnswerService {
 	}
 
 	@Nullable
-	private UserResponseDto getUserResponseDto(String token, FreeBoardAnswer freeBoardAnswer) {
+	private UserResponseDto getUserResponseDto(String token, String userId) {
 		return webClient.build()
-				.mutate().baseUrl(env.getProperty("user_service.url"))
+				.mutate().baseUrl("http://localhost:8080/users")
+//				.mutate().baseUrl(env.getProperty("user_service.url"))
 				.build()
 				.get()
 				.uri(uriBuilder -> uriBuilder
 						.path("/{id}")
-						.build(freeBoardAnswer.getWriterId()))
+						.build(userId))
 				.header("Authorization", token)
 				.retrieve()
 				.bodyToMono(UserResponseDto.class)
 				.block();
 	}
 
-	public FreeBoardAnswerResponseDto getFreeBoardAnswer(String answerId, String token) {
+	public AnswerResponseDto getFreeBoardAnswer(String answerId, String token) {
 		FreeBoardAnswer freeBoardAnswer = freeBoardAnswerRepository.findByAnswerId(answerId)
 				.orElseThrow(NotFoundException::new);
 
-		UserResponseDto user = getUserResponseDto(token, freeBoardAnswer);
+		log.info("Before call users microservice");
+		CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
+		UserResponseDto user = circuitBreaker.run(
+				() -> getUserResponseDto(token, freeBoardAnswer.getWriterId()),
+				throwable -> UserResponseDto.builder()
+						.email("")
+						.name("")
+						.createDate("")
+						.profileImage("")
+						.userId("")
+						.build());
+		log.info("After called users microservice");
 
-		return FreeBoardAnswerResponseDto.builder()
+		return AnswerResponseDto.builder()
 				.answerId(freeBoardAnswer.getAnswerId())
 				.writer(user)
 				.contents(freeBoardAnswer.getContents())
 				.updatedDate(freeBoardAnswer.getFormattedUpdateDate())
 				.build();
 	}
-	
-	public FreeBoardAnswerResponseDto updateFreeBoardAnswer(FreeBoardAnswerRequestDto request, String token) {
+
+	@Transactional
+	public AnswerResponseDto updateFreeBoardAnswer(AnswerRequestDto request, String token) {
 		FreeBoardAnswer answer = freeBoardAnswerRepository.findByAnswerId(request.answerId())
 				.orElseThrow(NotFoundException::new);
 		String userId = SecurityUtil.getCurrentMemberId();
@@ -134,16 +171,28 @@ public class FreeBoardAnswerService {
 
 		answer.update(request.contents());
 
-		UserResponseDto user = getUserResponseDto(token, answer);
+		log.info("Before call users microservice");
+		CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
+		UserResponseDto user = circuitBreaker.run(
+				() -> getUserResponseDto(token, answer.getWriterId()),
+				throwable -> UserResponseDto.builder()
+						.email("")
+						.name("")
+						.createDate("")
+						.profileImage("")
+						.userId("")
+						.build());
+		log.info("After called users microservice");
 
-		return  FreeBoardAnswerResponseDto.builder()
+		return  AnswerResponseDto.builder()
 				.answerId(answer.getAnswerId())
 				.writer(user)
 				.contents(answer.getContents())
 				.updatedDate(answer.getFormattedUpdateDate())
 				.build();
 	}
-	
+
+	@Transactional
 	public SuccessResponseDto deleteFreeBoardAnswer(String answerId) {
 		FreeBoardAnswer freeBoardAnswer = freeBoardAnswerRepository.findByAnswerId(answerId)
 				.orElseThrow(NotFoundException::new);
@@ -161,7 +210,7 @@ public class FreeBoardAnswerService {
 				.build();
 	}
 
-	public List<FreeBoardAnswerResponseDto> getFreeBoardAnswerList(String boardId, String token) {
+	public List<AnswerResponseDto> getFreeBoardAnswerList(String boardId, String token) {
 		List<FreeBoardAnswer> freeBoardAnswers = freeBoardAnswerRepository.findByFreeBoardId(boardId);
 
 		List<String> userIds = freeBoardAnswers.stream()
@@ -169,15 +218,26 @@ public class FreeBoardAnswerService {
 				.distinct()
 				.toList();
 
-		Mono<Map<String, UserResponseDto>> response = getUserResponseDtoList(token, userIds);
+		log.info("Before call users microservice");
+		CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
+		Map<String, UserResponseDto> users = circuitBreaker.run(
+				() -> getUserResponseDtoMap(token, userIds),
+				throwable -> new HashMap<>());
+		log.info("After called users microservice");
 
-		Map<String, UserResponseDto> users = response.block();
+		UserResponseDto user = UserResponseDto.builder()
+				.email("")
+				.name("")
+				.createDate("")
+				.profileImage("")
+				.userId("")
+				.build();
 
 		return freeBoardAnswers.stream()
 				.map(a -> {
-					return FreeBoardAnswerResponseDto.builder()
+					return AnswerResponseDto.builder()
 							.answerId(a.getAnswerId())
-							.writer(users.get(a.getWriterId()))
+							.writer(users.isEmpty() ? user : users.get(a.getWriterId()))
 							.contents(a.getContents())
 							.updatedDate(a.getFormattedUpdateDate())
 							.build();
@@ -185,10 +245,11 @@ public class FreeBoardAnswerService {
 				.toList();
 	}
 
-	@NotNull
-	private Mono<Map<String, UserResponseDto>> getUserResponseDtoList(String token, List<String> userIds) {
+	@Nullable
+	private Map<String, UserResponseDto> getUserResponseDtoMap(String token, List<String> userIds) {
 		return webClient.build()
-				.mutate().baseUrl(env.getProperty("user_service.url"))
+				.mutate().baseUrl("http://localhost:8080/users")
+//				.mutate().baseUrl(env.getProperty("user_service.url"))
 				.build()
 				.get()
 				.uri(uriBuilder -> uriBuilder
@@ -197,7 +258,8 @@ public class FreeBoardAnswerService {
 						.build())
 				.header(HttpHeaders.AUTHORIZATION, token)
 				.retrieve()
-				.bodyToMono(new ParameterizedTypeReference<Map<String, UserResponseDto>>() {});
+				.bodyToMono(new ParameterizedTypeReference<Map<String, UserResponseDto>>() {})
+				.block();
 	}
 
 }

@@ -1,8 +1,8 @@
 package com.phcworld.boardanswerservice.service;
 
 import com.phcworld.boardanswerservice.domain.FreeBoardAnswer;
-import com.phcworld.boardanswerservice.dto.FreeBoardAnswerRequestDto;
-import com.phcworld.boardanswerservice.dto.FreeBoardAnswerResponseDto;
+import com.phcworld.boardanswerservice.dto.AnswerRequestDto;
+import com.phcworld.boardanswerservice.dto.AnswerResponseDto;
 import com.phcworld.boardanswerservice.dto.SuccessResponseDto;
 import com.phcworld.boardanswerservice.dto.UserResponseDto;
 import com.phcworld.boardanswerservice.exception.model.NotFoundException;
@@ -14,16 +14,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class FreeBoardAnswerServiceTest {
+class AnswerServiceTest {
 
     @Mock
-    private FreeBoardAnswerService answerService;
+    private AnswerService answerService;
 
     private static UserResponseDto user;
 
@@ -51,7 +53,7 @@ class FreeBoardAnswerServiceTest {
 
     @Test
     void 답변_등록() {
-        FreeBoardAnswerRequestDto request = FreeBoardAnswerRequestDto.builder()
+        AnswerRequestDto request = AnswerRequestDto.builder()
                 .boardId(boardId)
                 .contents("contents")
                 .build();
@@ -63,7 +65,7 @@ class FreeBoardAnswerServiceTest {
                 .contents(request.contents())
                 .build();
 
-        FreeBoardAnswerResponseDto response =  FreeBoardAnswerResponseDto.builder()
+        AnswerResponseDto response =  AnswerResponseDto.builder()
                 .answerId(freeBoardAnswer.getAnswerId())
                 .writer(user)
                 .contents(freeBoardAnswer.getContents())
@@ -71,13 +73,13 @@ class FreeBoardAnswerServiceTest {
                 .build();
 
         when(answerService.register(request, token)).thenReturn(response);
-        FreeBoardAnswerResponseDto result = answerService.register(request, token);
+        AnswerResponseDto result = answerService.register(request, token);
         assertThat(response).isEqualTo(result);
     }
 
     @Test
     void 답변_등록_오류_없는_게시글() {
-        FreeBoardAnswerRequestDto request = FreeBoardAnswerRequestDto.builder()
+        AnswerRequestDto request = AnswerRequestDto.builder()
                 .boardId(boardId)
                 .contents("contents")
                 .build();
@@ -97,7 +99,7 @@ class FreeBoardAnswerServiceTest {
                 .contents("answer contents")
                 .build();
 
-        FreeBoardAnswerResponseDto response = FreeBoardAnswerResponseDto.builder()
+        AnswerResponseDto response = AnswerResponseDto.builder()
                 .answerId(freeBoardAnswer.getAnswerId())
                 .writer(user)
                 .contents(freeBoardAnswer.getContents())
@@ -105,7 +107,7 @@ class FreeBoardAnswerServiceTest {
                 .build();
 
         when(answerService.getFreeBoardAnswer(answerId, token)).thenReturn(response);
-        FreeBoardAnswerResponseDto result = answerService.getFreeBoardAnswer(answerId, token);
+        AnswerResponseDto result = answerService.getFreeBoardAnswer(answerId, token);
         assertThat(response).isEqualTo(result);
     }
 
@@ -119,7 +121,7 @@ class FreeBoardAnswerServiceTest {
 
     @Test
     void 답변_수정_성공() {
-        FreeBoardAnswerRequestDto request = FreeBoardAnswerRequestDto.builder()
+        AnswerRequestDto request = AnswerRequestDto.builder()
                 .answerId(answerId)
                 .contents("contents")
                 .build();
@@ -130,7 +132,7 @@ class FreeBoardAnswerServiceTest {
                 .contents(request.contents())
                 .build();
 
-        FreeBoardAnswerResponseDto response = FreeBoardAnswerResponseDto.builder()
+        AnswerResponseDto response = AnswerResponseDto.builder()
                 .answerId(freeBoardAnswer.getAnswerId())
                 .writer(user)
                 .contents(freeBoardAnswer.getContents())
@@ -138,13 +140,13 @@ class FreeBoardAnswerServiceTest {
                 .build();
 
         when(answerService.updateFreeBoardAnswer(request, token)).thenReturn(response);
-        FreeBoardAnswerResponseDto result = answerService.updateFreeBoardAnswer(request, token);
+        AnswerResponseDto result = answerService.updateFreeBoardAnswer(request, token);
         assertThat(response).isEqualTo(result);
     }
 
     @Test
     void 답변_수정_실패_없는_답변() {
-        FreeBoardAnswerRequestDto request = FreeBoardAnswerRequestDto.builder()
+        AnswerRequestDto request = AnswerRequestDto.builder()
                 .answerId(answerId)
                 .contents("contents")
                 .build();
@@ -156,7 +158,7 @@ class FreeBoardAnswerServiceTest {
 
     @Test
     void 답변_수정_실패_다른_작성자() {
-        FreeBoardAnswerRequestDto request = FreeBoardAnswerRequestDto.builder()
+        AnswerRequestDto request = AnswerRequestDto.builder()
                 .answerId(answerId)
                 .contents("contents")
                 .build();
@@ -176,5 +178,31 @@ class FreeBoardAnswerServiceTest {
         when(answerService.deleteFreeBoardAnswer(answerId)).thenReturn(response);
         SuccessResponseDto result = answerService.deleteFreeBoardAnswer(answerId);
         assertThat(response).isEqualTo(result);
+    }
+
+    @Test
+    void 게시글_답변_목록_조회(){
+        AnswerResponseDto response = AnswerResponseDto.builder()
+                .answerId(answerId)
+                .writer(user)
+                .contents("contents")
+                .updatedDate("방금전")
+                .build();
+        String answerId2 = UUID.randomUUID().toString();
+        AnswerResponseDto response2 = AnswerResponseDto.builder()
+                .answerId(answerId2)
+                .writer(user)
+                .contents("contents")
+                .updatedDate("방금전")
+                .build();
+
+        List<AnswerResponseDto> list = new ArrayList<>();
+        list.add(response);
+        list.add(response2);
+
+        when(answerService.getFreeBoardAnswerList("1111", token)).thenReturn(list);
+        List<AnswerResponseDto> result = answerService.getFreeBoardAnswerList("1111", token);
+        assertThat(result).contains(response)
+                .contains(response2);
     }
 }
