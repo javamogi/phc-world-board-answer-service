@@ -10,6 +10,6 @@ public class Payload {
     private String writer_id;
     private String free_board_id;
     private String contents;
-    private long create_date;
-    private long update_date;
+    private String update_date;
+    private byte is_deleted;
 }

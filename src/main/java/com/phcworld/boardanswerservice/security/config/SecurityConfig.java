@@ -37,7 +37,7 @@ public class SecurityConfig {
 
     @Bean
     public WebSecurityCustomizer configure(){
-        return (web) -> web.ignoring()
+        return web -> web.ignoring()
                 .requestMatchers(
                         /* swagger v2 */
                         "/v2/api-docs",
@@ -62,8 +62,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         return http
-                .csrf((csrfConfig) -> csrfConfig.disable())
-                .authorizeRequests((authorizeRequestsConfig) ->
+                .csrf(csrfConfig -> csrfConfig.disable())
+                .authorizeHttpRequests(authorizeRequestsConfig ->
                         authorizeRequestsConfig
 //                                .requestMatchers(antMatcher(HttpMethod.GET, "/freeboards")).permitAll()
                                 .requestMatchers("/**").permitAll()
@@ -72,15 +72,15 @@ public class SecurityConfig {
                                 .anyRequest().authenticated()
                 )
                 // enable h2-console
-                .headers((headers)->
+                .headers(headers->
                         headers.contentTypeOptions(contentTypeOptionsConfig ->
                                 headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)))
-                .exceptionHandling((exceptionConfig) ->
+                .exceptionHandling(exceptionConfig ->
                         exceptionConfig
                                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                                 .accessDeniedHandler(jwtAccessDeniedHandler))
 
-                .sessionManagement((sessionManagementConfig) -> sessionManagementConfig.
+                .sessionManagement(sessionManagementConfig -> sessionManagementConfig.
                         sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .with(new JwtSecurityConfig(tokenProvider, jwtExceptionFilter), Customizer.withDefaults())
                 .build();

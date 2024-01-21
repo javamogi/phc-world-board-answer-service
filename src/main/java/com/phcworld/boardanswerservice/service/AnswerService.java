@@ -16,20 +16,9 @@ import com.phcworld.boardanswerservice.repository.FreeBoardAnswerRepository;
 import com.phcworld.boardanswerservice.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
-import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.env.Environment;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,11 +30,8 @@ import java.util.UUID;
 public class AnswerService {
 	
 	private final FreeBoardAnswerRepository freeBoardAnswerRepository;
-	private final Environment env;
-	private final WebClient.Builder webClient;
 	private final KafkaProducer kafkaProducer;
 	private final AnswerProducer answerProducer;
-//	private final CircuitBreakerFactory circuitBreakerFactory;
 	private final WebclientService webclientService;
 
 
@@ -69,7 +55,6 @@ public class AnswerService {
 				.writerId(userId)
 				.freeBoardId(request.boardId())
 				.contents(request.contents())
-				.createDate(LocalDateTime.now())
 				.updateDate(LocalDateTime.now())
 				.build();
 //		freeBoardAnswerRepository.save(freeBoardAnswer);
@@ -78,10 +63,6 @@ public class AnswerService {
 		answerProducer.send("answers", freeBoardAnswer);
 
 		UserResponseDto user = webclientService.getUserResponseDto(token, freeBoardAnswer);
-
-		if(user == null){
-			throw new NotFoundException();
-		}
 
 		return AnswerResponseDto.builder()
 				.answerId(answerId)
@@ -105,7 +86,6 @@ public class AnswerService {
 				.build();
 	}
 
-	@Transactional
 	public AnswerResponseDto updateFreeBoardAnswer(AnswerRequestDto request, String token) {
 		FreeBoardAnswer answer = freeBoardAnswerRepository.findByAnswerId(request.answerId())
 				.orElseThrow(NotFoundException::new);
@@ -116,6 +96,7 @@ public class AnswerService {
 		}
 
 		answer.update(request.contents());
+		answerProducer.send("answers", answer);
 
 		UserResponseDto user = webclientService.getUserResponseDto(token, answer);
 
@@ -127,7 +108,6 @@ public class AnswerService {
 				.build();
 	}
 
-	@Transactional
 	public SuccessResponseDto deleteFreeBoardAnswer(String answerId) {
 		FreeBoardAnswer freeBoardAnswer = freeBoardAnswerRepository.findByAnswerId(answerId)
 				.orElseThrow(NotFoundException::new);
@@ -137,7 +117,9 @@ public class AnswerService {
 			throw new UnauthorizedException();
 		}
 
-		freeBoardAnswerRepository.delete(freeBoardAnswer);
+//		freeBoardAnswerRepository.delete(freeBoardAnswer);
+
+		answerProducer.send("answers", freeBoardAnswer);
 		
 		return SuccessResponseDto.builder()
 				.message("삭제성공")

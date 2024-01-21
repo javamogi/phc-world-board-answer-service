@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -41,14 +42,19 @@ public class FreeBoardAnswer {
 	private String freeBoardId;
 	
 	@Lob
+	@Column(nullable = false)
 	private String contents;
 
-	@CreatedDate
+	@Column(nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP()")
 	private LocalDateTime createDate;
-	
-	@LastModifiedDate
+
+	@Column(nullable = false)
 	private LocalDateTime updateDate;
-	
+
+	@ColumnDefault("false")
+	@Column(nullable = false)
+	private Boolean isDeleted;
+
 	public String getFormattedCreateDate() {
 		return LocalDateTimeUtils.getTime(createDate);
 	}

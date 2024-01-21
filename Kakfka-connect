@@ -1,0 +1,32 @@
+{
+    "name": "my-answers-sink-connect",
+    "config": {
+        "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+        "connection.url": "jdbc:mysql://mysql:3306/test",
+        "connection.user": "root",
+        "connection.password": "root",
+        "insert.mode": "upsert",
+        "delete.enabled": "false",
+        "tasks.max": "1",
+        "table.name.format": "answers",
+        "topics": "answers",
+        "pk.mode": "record_value",
+        "transforms": "TimestampConverter",
+        "transforms.TimestampConverter.type": "org.apache.kafka.connect.transforms.TimestampConverter$Value",
+        "transforms.TimestampConverter.format": "yyyy-MM-dd HH:mm:ss.SSSSSS",
+        "transforms.TimestampConverter.target.type": "Timestamp",
+        "transforms.TimestampConverter.field": "update_date",
+        "auto.create": "false",
+        "auto.evolve": "false"
+    }
+}
+
+참고
+kafka connect JDBC Sink Connector Configuration
+https://docs.confluent.io/kafka-connectors/jdbc/current/sink-connector/sink_config_options.html#data-mapping?utm_source=rmoff&utm_medium=blog&utm_campaign=tm.devx_ch.rmoff_jdbc-sink-primary-keys&utm_term=rmoff-devx
+삭제 연동은 delete.enabled=true
+"pk.mode": "record_key",
+"pk.fields": "id",
+삭제는 모든 필드의 값을 가지고 있어야 하기 때문에 upsert 모드와 별도로 다른 topic으로 처리
+pk, unique값 제외 변경 확인
+

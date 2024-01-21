@@ -33,8 +33,8 @@ public class WebclientService {
         boolean result = Boolean.TRUE.equals(
                 circuitBreaker.run(() ->
                                 webClient.build()
-                                        .mutate().baseUrl("http://localhost:8080/boards")
-//				.mutate().baseUrl(env.getProperty("board_service.url"))
+//                                        .mutate().baseUrl("http://localhost:8080/boards")
+                                        .mutate().baseUrl(env.getProperty("board_service.url"))
                                         .build()
                                         .get()
                                         .uri(uriBuilder -> uriBuilder
