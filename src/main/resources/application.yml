@@ -8,7 +8,7 @@ spring:
     password: guest
 
   profiles:
-    active: dev
+    active: mysql
 
 server:
   port: 0
@@ -33,3 +33,11 @@ management:
     web:
       exposure:
         include: refresh, health, beans, busrefresh
+
+kafka:
+  broker:
+    url: 127.0.0.1:9092
+user_service:
+  url: http://localhost:8080/users
+board_service:
+  url: http://localhost:8080/freeboards
