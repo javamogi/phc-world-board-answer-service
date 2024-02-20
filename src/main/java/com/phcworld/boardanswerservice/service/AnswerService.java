@@ -43,10 +43,8 @@ public class AnswerService {
 			throw new NotFoundException();
 		}
 		String answerId = UUID.randomUUID().toString();
-		boolean exist = freeBoardAnswerRepository.findByAnswerId(answerId)
-				.isPresent();
-		if(exist){
-			throw new DuplicationException();
+		while(freeBoardAnswerRepository.findByAnswerId(answerId).isPresent()){
+			answerId = UUID.randomUUID().toString();
 		}
 
 		String userId = SecurityUtil.getCurrentMemberId();
