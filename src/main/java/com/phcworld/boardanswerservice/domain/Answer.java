@@ -16,7 +16,7 @@ public class Answer {
     private Long id;
     private String answerId;
     private String writerId;
-    private String freeBoardId;
+    private Long freeBoardId;
     private String contents;
     private LocalDateTime createDate;
     private LocalDateTime updateDate;
@@ -51,6 +51,19 @@ public class Answer {
                 .createDate(createDate)
                 .updateDate(updateDate)
                 .isDeleted(isDeleted)
+                .build();
+    }
+
+    public Answer delete() {
+        return Answer.builder()
+                .id(id)
+                .answerId(answerId)
+                .writerId(writerId)
+                .freeBoardId(freeBoardId)
+                .contents(contents)
+                .createDate(createDate)
+                .updateDate(updateDate)
+                .isDeleted(true)
                 .build();
     }
 }

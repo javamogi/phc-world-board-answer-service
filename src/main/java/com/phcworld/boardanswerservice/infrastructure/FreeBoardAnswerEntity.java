@@ -38,7 +38,7 @@ public class FreeBoardAnswerEntity {
 	private String writerId;
 
 	@Column(nullable = false)
-	private String freeBoardId;
+	private Long freeBoardId;
 	
 	@Lob
 	@Column(nullable = false)
@@ -54,20 +54,28 @@ public class FreeBoardAnswerEntity {
 	@Column(nullable = false)
 	private Boolean isDeleted;
 
-	public String getFormattedCreateDate() {
-		return LocalDateTimeUtils.getTime(createDate);
+	public static FreeBoardAnswerEntity from(Answer answer) {
+		return FreeBoardAnswerEntity.builder()
+				.answerId(answer.getAnswerId())
+				.writerId(answer.getWriterId())
+				.freeBoardId(answer.getFreeBoardId())
+				.contents(answer.getContents())
+				.createDate(answer.getCreateDate())
+				.updateDate(answer.getUpdateDate())
+				.isDeleted(answer.isDeleted())
+				.build();
 	}
 
-	public String getFormattedUpdateDate() {
-		return LocalDateTimeUtils.getTime(updateDate);
+	public Answer toModel() {
+		return Answer.builder()
+				.id(id)
+				.answerId(answerId)
+				.writerId(writerId)
+				.freeBoardId(freeBoardId)
+				.contents(contents)
+				.createDate(createDate)
+				.updateDate(updateDate)
+				.isDeleted(isDeleted)
+				.build();
 	}
-
-	public boolean isSameWriter(String userId) {
-		return this.writerId.equals(userId);
-	}
-
-	public void update(String contents) {
-		this.contents = contents;
-	}
-
 }

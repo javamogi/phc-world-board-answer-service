@@ -1,4 +1,7 @@
 spring:
+  cloud:
+    bus:
+      enabled: false
   h2:
     console:
       enabled: true
@@ -20,3 +23,10 @@ spring:
       hibernate.default_batch_fetch_size: 1000
       hibernate:
         format_sql: true
+eureka:
+  client:
+    enabled: false
+management:
+  health:
+    rabbit:
+      enabled: false

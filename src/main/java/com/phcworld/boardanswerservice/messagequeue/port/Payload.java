@@ -8,7 +8,7 @@ import lombok.Data;
 public class Payload {
     private String answer_id;
     private String writer_id;
-    private String free_board_id;
+    private Long free_board_id;
     private String contents;
     private String update_date;
     private byte is_deleted;

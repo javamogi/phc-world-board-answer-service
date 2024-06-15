@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface FreeBoardAnswerJpaRepository extends JpaRepository<FreeBoardAnswerEntity, Long> {
 	List<FreeBoardAnswerEntity> findByWriterId(String userId);
-	List<FreeBoardAnswerEntity> findByFreeBoardId(String boardId);
+	List<FreeBoardAnswerEntity> findByFreeBoardIdAndIsDeleted(Long boardId, boolean isDelete);
 
 	Optional<FreeBoardAnswerEntity> findByAnswerId(String answerId);
 }

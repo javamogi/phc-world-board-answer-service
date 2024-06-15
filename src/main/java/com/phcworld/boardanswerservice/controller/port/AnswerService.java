@@ -9,5 +9,5 @@ public interface AnswerService {
     Answer getAnswer(String answerId, String token);
     Answer update(AnswerRequest request, String token);
     Answer delete(String answerId);
-    List<Answer> getAnswerList(String boardId, String token);
+    List<Answer> getAnswerList(Long boardId, String token);
 }

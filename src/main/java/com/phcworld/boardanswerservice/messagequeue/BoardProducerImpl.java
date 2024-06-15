@@ -4,8 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phcworld.boardanswerservice.domain.Answer;
 import com.phcworld.boardanswerservice.exception.model.InternalServerErrorException;
-import com.phcworld.boardanswerservice.infrastructure.FreeBoardAnswerEntity;
-import com.phcworld.boardanswerservice.service.port.AnswerRepository;
 import com.phcworld.boardanswerservice.service.port.BoardProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,11 +13,12 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class BoardProducerImpl {
+public class BoardProducerImpl implements BoardProducer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper mapper;
 
-    public FreeBoardAnswerEntity send(String topic, FreeBoardAnswerEntity answer){
+    @Override
+    public Answer send(String topic, Answer answer){
         String jsonInString = "";
         try {
             jsonInString = mapper.writeValueAsString(answer);

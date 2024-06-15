@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface AnswerRepository {
     List<Answer> findByWriterId(String userId);
-    List<Answer> findByFreeBoardIdAndIsDeleted(String boardId, boolean isDelete);
+    List<Answer> findByFreeBoardIdAndIsDeleted(Long boardId, boolean isDelete);
     Optional<Answer> findByAnswerId(String answerId);
     Answer save(Answer answer);
 }

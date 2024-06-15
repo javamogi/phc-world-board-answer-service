@@ -1,7 +1,8 @@
 package com.phcworld.boardanswerservice.service;
 
+import com.phcworld.boardanswerservice.controller.port.WebClientService;
+import com.phcworld.boardanswerservice.domain.Answer;
 import com.phcworld.boardanswerservice.infrastructure.FreeBoardAnswerEntity;
-import com.phcworld.boardanswerservice.controller.port.AnswerRequest;
 import com.phcworld.boardanswerservice.service.port.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,36 +21,14 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class WebclientService {
+public class WebclientServiceImpl implements WebClientService {
 
     private final WebClient.Builder webClient;
     private final Environment env;
     private final CircuitBreakerFactory circuitBreakerFactory;
 
-    public boolean existFreeBoard(AnswerRequest request, String token){
-        log.info("Before call boards microservice");
-        CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
-        boolean result = Boolean.TRUE.equals(
-                circuitBreaker.run(() ->
-                                webClient.build()
-//                                        .mutate().baseUrl("http://localhost:8080/boards")
-                                        .mutate().baseUrl(env.getProperty("board_service.url"))
-                                        .build()
-                                        .get()
-                                        .uri(uriBuilder -> uriBuilder
-                                                .path("/{id}/exist")
-                                                .build(request.boardId()))
-                                        .header("Authorization", token)
-                                        .retrieve()
-                                        .bodyToMono(Boolean.class)
-                                        .block(),
-                        throwable -> false)
-        );
-        log.info("After call boards microservice");
-        return result;
-    }
-
-    public UserResponse getUserResponseDto(String token, FreeBoardAnswerEntity answer) {
+    @Override
+    public UserResponse getUser(String token, Answer answer) {
         log.info("Before call users microservice");
         CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
         UserResponse user = circuitBreaker.run(
@@ -76,7 +55,13 @@ public class WebclientService {
         return user;
     }
 
-    public Map<String, UserResponse> getUserResponseDtoMap(String token, List<String> userIds) {
+    @Override
+    public Map<String, UserResponse> getUsersMap(String token, List<Answer> answers) {
+        List<String> userIds = answers.stream()
+				.map(Answer::getWriterId)
+				.distinct()
+				.toList();
+
         log.info("Before call users microservice");
         CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
         Map<String, UserResponse> users = circuitBreaker.run(

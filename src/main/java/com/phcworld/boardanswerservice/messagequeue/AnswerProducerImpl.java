@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phcworld.boardanswerservice.domain.Answer;
 import com.phcworld.boardanswerservice.exception.model.InternalServerErrorException;
-import com.phcworld.boardanswerservice.infrastructure.FreeBoardAnswerEntity;
 import com.phcworld.boardanswerservice.messagequeue.port.Field;
 import com.phcworld.boardanswerservice.messagequeue.port.KafkaAnswerDto;
 import com.phcworld.boardanswerservice.messagequeue.port.Payload;
@@ -23,7 +22,7 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class AnswerProducerImpl {
+public class AnswerProducerImpl implements AnswerProducer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper mapper;
 
@@ -31,7 +30,7 @@ public class AnswerProducerImpl {
             new Field("int8", false, "is_deleted"),
             new Field("string", false, "answer_id"),
             new Field("string", false, "writer_id"),
-            new Field("string", false, "free_board_id"),
+            new Field("int64", false, "free_board_id"),
             new Field("string", false, "contents"),
             new Field("string", false, "update_date"));
     Schema schema = Schema.builder()
@@ -41,7 +40,8 @@ public class AnswerProducerImpl {
             .name("answers")
             .build();
 
-    public FreeBoardAnswerEntity send(String topic, FreeBoardAnswerEntity answer){
+    @Override
+    public Answer send(String topic, Answer answer){
         Payload payload = Payload.builder()
                 .answer_id(answer.getAnswerId())
                 .writer_id(answer.getWriterId())

@@ -1,8 +1,8 @@
 package com.phcworld.boardanswerservice.jwt;
 
-import com.phcworld.phcworldboardservice.exception.model.BadRequestException;
-import com.phcworld.phcworldboardservice.exception.model.ErrorCode;
-import com.phcworld.phcworldboardservice.exception.model.UnauthorizedException;
+import com.phcworld.boardanswerservice.exception.model.BadRequestException;
+import com.phcworld.boardanswerservice.exception.model.ErrorCode;
+import com.phcworld.boardanswerservice.exception.model.UnauthorizedException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -70,7 +70,7 @@ public class TokenValidator {
             throw new BadRequestException(ErrorCode.TOKEN_BAD_REQUEST);
         } catch (ExpiredJwtException e) {
             log.debug("만료된 JWT 토큰입니다.");
-            throw new UnauthorizedException();
+            throw new BadRequestException(ErrorCode.TOKEN_EXPIRED);
         } catch (UnsupportedJwtException e) {
             log.debug("지원되지 않는 JWT 토큰입니다.");
             throw new BadRequestException(ErrorCode.TOKEN_BAD_REQUEST);

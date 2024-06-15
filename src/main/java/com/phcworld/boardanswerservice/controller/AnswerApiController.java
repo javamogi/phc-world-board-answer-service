@@ -1,17 +1,19 @@
 package com.phcworld.boardanswerservice.controller;
 
-import com.phcworld.boardanswerservice.controller.port.AnswerRequest;
-import com.phcworld.boardanswerservice.controller.port.AnswerResponse;
-import com.phcworld.boardanswerservice.controller.port.SuccessResponseDto;
-import com.phcworld.boardanswerservice.service.AnswerService;
+import com.phcworld.boardanswerservice.controller.port.*;
+import com.phcworld.boardanswerservice.domain.Answer;
+import com.phcworld.boardanswerservice.service.port.UserResponse;
+import com.phcworld.boardanswerservice.utils.LocalDateTimeUtils;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -20,29 +22,35 @@ import java.util.List;
 public class AnswerApiController {
 	
 	private final AnswerService answerService;
+	private final WebClientService webClientService;
 
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "404", description = "답변을 등록할 게시글 없음"),
 			@ApiResponse(responseCode = "409", description = "DB에 저장할 때 UNIQUE 충돌"),
-			// TO DO 수정
 			@ApiResponse(responseCode = "404", description = "답변을 등록하는 회원 없음")
 	})
 	@PostMapping("")
 	@ResponseStatus(value = HttpStatus.CREATED)
-	public AnswerResponse register(@RequestBody AnswerRequest requestDto,
-								   HttpServletRequest request) {
-		String token = request.getHeader("Authorization");
-		return answerService.register(requestDto, token);
+	public ResponseEntity<AnswerResponse> register(@RequestBody AnswerRequest requestDto,
+												  @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+		Answer answer = answerService.register(requestDto, token);
+		UserResponse user = webClientService.getUser(token, answer);
+		return ResponseEntity
+				.status(HttpStatus.CREATED)
+				.body(AnswerResponse.of(answer, user));
 	}
 
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "404", description = "요청한 답변 없음"),
 	})
 	@GetMapping("/{answerId}")
-	public AnswerResponse getFreeBoardAnswer(@PathVariable(name = "answerId") String answerId,
-											 HttpServletRequest request) {
-		String token = request.getHeader("Authorization");
-		return answerService.getFreeBoardAnswer(answerId, token);
+	public ResponseEntity<AnswerResponse> getFreeBoardAnswer(@PathVariable(name = "answerId") String answerId,
+											 @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+		Answer answer = answerService.getAnswer(answerId, token);
+		UserResponse user = webClientService.getUser(token, answer);
+		return ResponseEntity
+				.ok()
+				.body(AnswerResponse.of(answer, user));
 	}
 
 	@ApiResponses(value = {
@@ -50,10 +58,14 @@ public class AnswerApiController {
 			@ApiResponse(responseCode = "403", description = "수정 권한 없음")
 	})
 	@PatchMapping("")
-	public AnswerResponse updateFreeBoardAnswer(@RequestBody AnswerRequest requestDto,
-												HttpServletRequest request) {
-		String token = request.getHeader("Authorization");
-		return answerService.updateFreeBoardAnswer(requestDto, token);
+	public ResponseEntity<AnswerResponse> updateFreeBoardAnswer(@RequestBody AnswerRequest requestDto,
+												@RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+
+		Answer answer = answerService.update(requestDto, token);
+		UserResponse user = webClientService.getUser(token, answer);
+		return ResponseEntity
+				.ok()
+				.body(AnswerResponse.of(answer, user));
 	}
 
 	@ApiResponses(value = {
@@ -61,15 +73,35 @@ public class AnswerApiController {
 			@ApiResponse(responseCode = "403", description = "삭제 권한 없음")
 	})
 	@DeleteMapping("/{answerId}")
-	public SuccessResponseDto deleteFreeBoardAnswer(@PathVariable(name = "answerId") String answerId) {
-		return answerService.deleteFreeBoardAnswer(answerId);
+	public ResponseEntity<AnswerResponse> deleteFreeBoardAnswer(@PathVariable(name = "answerId") String answerId,
+																@RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+		Answer answer = answerService.delete(answerId);
+		UserResponse user = webClientService.getUser(token, answer);
+		return ResponseEntity
+				.ok()
+				.body(AnswerResponse.of(answer, user));
 	}
 
 	@GetMapping("/freeboards/{freeboardId}")
-	public List<AnswerResponse> getFreeBoardAnswers(@PathVariable(name = "freeboardId") String freeboardId,
-													HttpServletRequest request){
-		String token = request.getHeader("Authorization");
-		return answerService.getFreeBoardAnswerList(freeboardId, token);
+	public ResponseEntity<List<AnswerResponse>> getFreeBoardAnswers(@PathVariable(name = "freeboardId") Long freeboardId,
+													@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+		List<Answer> answers = answerService.getAnswerList(freeboardId, token);
+
+		Map<String, UserResponse> users = webClientService.getUsersMap(token, answers);
+		List<AnswerResponse> result = answers.stream()
+				.map(answer -> {
+					return AnswerResponse.builder()
+							.answerId(answer.getAnswerId())
+							.writer(users != null ? users.get(answer.getWriterId()) : null)
+							.contents(answer.getContents())
+							.updatedDate(LocalDateTimeUtils.getTime(answer.getUpdateDate()))
+							.isDeleted(answer.isDeleted())
+							.build();
+				})
+				.toList();
+		return ResponseEntity
+				.ok()
+				.body(result);
 	}
 
 }

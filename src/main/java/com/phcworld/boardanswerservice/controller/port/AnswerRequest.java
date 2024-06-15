@@ -5,7 +5,7 @@ import lombok.Builder;
 
 @Builder
 public record AnswerRequest(
-        String boardId,
+        Long boardId,
         String answerId,
         @NotBlank(message = "내용을 입력하세요.")
         String contents
