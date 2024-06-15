@@ -1,4 +1,4 @@
-package com.phcworld.boardanswerservice.controller.port;
+package com.phcworld.boardanswerservice.domain.port;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;

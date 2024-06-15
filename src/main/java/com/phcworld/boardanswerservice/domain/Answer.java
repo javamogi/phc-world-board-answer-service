@@ -1,6 +1,6 @@
 package com.phcworld.boardanswerservice.domain;
 
-import com.phcworld.boardanswerservice.controller.port.AnswerRequest;
+import com.phcworld.boardanswerservice.domain.port.AnswerRequest;
 import com.phcworld.boardanswerservice.service.port.LocalDateTimeHolder;
 import com.phcworld.boardanswerservice.service.port.UuidHolder;
 import lombok.AllArgsConstructor;

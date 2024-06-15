@@ -2,10 +2,12 @@ package com.phcworld.boardanswerservice.controller;
 
 import com.phcworld.boardanswerservice.controller.port.*;
 import com.phcworld.boardanswerservice.domain.Answer;
+import com.phcworld.boardanswerservice.domain.port.AnswerRequest;
 import com.phcworld.boardanswerservice.service.port.UserResponse;
 import com.phcworld.boardanswerservice.utils.LocalDateTimeUtils;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/answers")
 @RequiredArgsConstructor
+@Builder
 public class AnswerApiController {
 	
 	private final AnswerService answerService;
@@ -33,7 +36,7 @@ public class AnswerApiController {
 	@ResponseStatus(value = HttpStatus.CREATED)
 	public ResponseEntity<AnswerResponse> register(@RequestBody AnswerRequest requestDto,
 												  @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
-		Answer answer = answerService.register(requestDto, token);
+		Answer answer = answerService.register(requestDto);
 		UserResponse user = webClientService.getUser(token, answer);
 		return ResponseEntity
 				.status(HttpStatus.CREATED)
@@ -46,7 +49,7 @@ public class AnswerApiController {
 	@GetMapping("/{answerId}")
 	public ResponseEntity<AnswerResponse> getFreeBoardAnswer(@PathVariable(name = "answerId") String answerId,
 											 @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
-		Answer answer = answerService.getAnswer(answerId, token);
+		Answer answer = answerService.getAnswer(answerId);
 		UserResponse user = webClientService.getUser(token, answer);
 		return ResponseEntity
 				.ok()
@@ -61,7 +64,7 @@ public class AnswerApiController {
 	public ResponseEntity<AnswerResponse> updateFreeBoardAnswer(@RequestBody AnswerRequest requestDto,
 												@RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
 
-		Answer answer = answerService.update(requestDto, token);
+		Answer answer = answerService.update(requestDto);
 		UserResponse user = webClientService.getUser(token, answer);
 		return ResponseEntity
 				.ok()
@@ -85,7 +88,7 @@ public class AnswerApiController {
 	@GetMapping("/freeboards/{freeboardId}")
 	public ResponseEntity<List<AnswerResponse>> getFreeBoardAnswers(@PathVariable(name = "freeboardId") Long freeboardId,
 													@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
-		List<Answer> answers = answerService.getAnswerList(freeboardId, token);
+		List<Answer> answers = answerService.getAnswerList(freeboardId);
 
 		Map<String, UserResponse> users = webClientService.getUsersMap(token, answers);
 		List<AnswerResponse> result = answers.stream()
