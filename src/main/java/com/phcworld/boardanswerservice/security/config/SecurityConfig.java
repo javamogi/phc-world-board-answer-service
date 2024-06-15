@@ -1,6 +1,6 @@
 package com.phcworld.boardanswerservice.security.config;
 
-import com.phcworld.boardanswerservice.jwt.TokenProvider;
+import com.phcworld.boardanswerservice.jwt.TokenValidator;
 import com.phcworld.boardanswerservice.jwt.config.JwtSecurityConfig;
 import com.phcworld.boardanswerservice.jwt.entry.JwtAuthenticationEntryPoint;
 import com.phcworld.boardanswerservice.jwt.filter.JwtExceptionFilter;
@@ -8,7 +8,6 @@ import com.phcworld.boardanswerservice.jwt.handler.JwtAccessDeniedHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -24,11 +23,10 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final TokenProvider tokenProvider;
+    private final TokenValidator tokenValidator;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final JwtExceptionFilter jwtExceptionFilter;
-    private final Environment env;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -82,7 +80,7 @@ public class SecurityConfig {
 
                 .sessionManagement(sessionManagementConfig -> sessionManagementConfig.
                         sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .with(new JwtSecurityConfig(tokenProvider, jwtExceptionFilter), Customizer.withDefaults())
+                .with(new JwtSecurityConfig(tokenValidator, jwtExceptionFilter), Customizer.withDefaults())
                 .build();
 
     }
