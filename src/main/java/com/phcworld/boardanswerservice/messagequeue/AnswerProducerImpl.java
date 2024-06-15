@@ -48,6 +48,7 @@ public class AnswerProducerImpl implements AnswerProducer {
                 .free_board_id(answer.getFreeBoardId())
                 .contents(answer.getContents())
                 .update_date(LocalDateTime.now().withNano(0).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")))
+                .is_deleted((byte)(Boolean.TRUE.equals(answer.isDeleted()) ? 1 : 0))
                 .build();
 
         KafkaAnswerDto kafkaAnswerDto = KafkaAnswerDto.builder()
