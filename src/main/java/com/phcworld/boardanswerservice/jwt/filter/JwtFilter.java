@@ -1,6 +1,6 @@
 package com.phcworld.boardanswerservice.jwt.filter;
 
-import com.phcworld.boardanswerservice.jwt.TokenProvider;
+import com.phcworld.boardanswerservice.jwt.TokenValidator;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,7 +19,7 @@ public class JwtFilter extends OncePerRequestFilter {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
 
-    private final TokenProvider tokenProvider;
+    private final TokenValidator tokenValidator;
 
     // 실제 필터링 로직은 doFilterInternal 에 들어감
     // JWT 토큰의 인증 정보를 현재 쓰레드의 SecurityContext 에 저장하는 역할 수행
@@ -31,8 +31,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 2. validateToken 으로 토큰 유효성 검사
         // 정상 토큰이면 해당 토큰으로 Authentication 을 가져와서 SecurityContext 에 저장
-        if (StringUtils.hasText(jwt)) {
-            Authentication authentication = tokenProvider.getAuthentication(jwt);
+        if (StringUtils.hasText(jwt) && tokenValidator.validateToken(jwt)) {
+            Authentication authentication = tokenValidator.getAuthentication(jwt);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 

@@ -1,4 +1,4 @@
-package com.phcworld.boardanswerservice.dto;
+package com.phcworld.boardanswerservice.controller.port;
 
 import lombok.Builder;
 

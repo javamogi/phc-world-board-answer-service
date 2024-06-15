@@ -1,4 +1,4 @@
-package com.phcworld.boardanswerservice.dto;
+package com.phcworld.boardanswerservice.messagequeue.port;
 
 import lombok.Builder;
 import lombok.Data;

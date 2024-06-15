@@ -1,8 +1,8 @@
 package com.phcworld.boardanswerservice.service;
 
-import com.phcworld.boardanswerservice.domain.FreeBoardAnswer;
-import com.phcworld.boardanswerservice.dto.AnswerRequestDto;
-import com.phcworld.boardanswerservice.dto.UserResponseDto;
+import com.phcworld.boardanswerservice.infrastructure.FreeBoardAnswerEntity;
+import com.phcworld.boardanswerservice.controller.port.AnswerRequest;
+import com.phcworld.boardanswerservice.service.port.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
@@ -13,7 +13,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +26,7 @@ public class WebclientService {
     private final Environment env;
     private final CircuitBreakerFactory circuitBreakerFactory;
 
-    public boolean existFreeBoard(AnswerRequestDto request, String token){
+    public boolean existFreeBoard(AnswerRequest request, String token){
         log.info("Before call boards microservice");
         CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
         boolean result = Boolean.TRUE.equals(
@@ -50,10 +49,10 @@ public class WebclientService {
         return result;
     }
 
-    public UserResponseDto getUserResponseDto(String token, FreeBoardAnswer answer) {
+    public UserResponse getUserResponseDto(String token, FreeBoardAnswerEntity answer) {
         log.info("Before call users microservice");
         CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
-        UserResponseDto user = circuitBreaker.run(
+        UserResponse user = circuitBreaker.run(
                 () -> webClient.build()
 //                        .mutate().baseUrl("http://localhost:8080/users")
 				        .mutate().baseUrl(env.getProperty("user_service.url"))
@@ -64,9 +63,9 @@ public class WebclientService {
                                 .build(answer.getWriterId()))
                         .header(HttpHeaders.AUTHORIZATION, token)
                         .retrieve()
-                        .bodyToMono(UserResponseDto.class)
+                        .bodyToMono(UserResponse.class)
                         .block(),
-                throwable -> UserResponseDto.builder()
+                throwable -> UserResponse.builder()
                         .email("")
                         .name("")
                         .createDate("")
@@ -77,10 +76,10 @@ public class WebclientService {
         return user;
     }
 
-    public Map<String, UserResponseDto> getUserResponseDtoMap(String token, List<String> userIds) {
+    public Map<String, UserResponse> getUserResponseDtoMap(String token, List<String> userIds) {
         log.info("Before call users microservice");
         CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
-        Map<String, UserResponseDto> users = circuitBreaker.run(
+        Map<String, UserResponse> users = circuitBreaker.run(
                 () -> webClient.build()
 //                        .mutate().baseUrl("http://localhost:8080/users")
 				        .mutate().baseUrl(env.getProperty("user_service.url"))
@@ -92,7 +91,7 @@ public class WebclientService {
                                 .build())
                         .header(HttpHeaders.AUTHORIZATION, token)
                         .retrieve()
-                        .bodyToMono(new ParameterizedTypeReference<Map<String, UserResponseDto>>() {})
+                        .bodyToMono(new ParameterizedTypeReference<Map<String, UserResponse>>() {})
                         .block(),
                 throwable -> new HashMap<>());
         log.info("After called users microservice");

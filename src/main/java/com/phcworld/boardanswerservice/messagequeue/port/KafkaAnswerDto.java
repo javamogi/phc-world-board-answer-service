@@ -1,6 +1,5 @@
-package com.phcworld.boardanswerservice.dto;
+package com.phcworld.boardanswerservice.messagequeue.port;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 

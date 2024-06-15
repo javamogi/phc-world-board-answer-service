@@ -1,8 +1,8 @@
-package com.phcworld.boardanswerservice.web;
+package com.phcworld.boardanswerservice.controller;
 
-import com.phcworld.boardanswerservice.dto.AnswerRequestDto;
-import com.phcworld.boardanswerservice.dto.AnswerResponseDto;
-import com.phcworld.boardanswerservice.dto.SuccessResponseDto;
+import com.phcworld.boardanswerservice.controller.port.AnswerRequest;
+import com.phcworld.boardanswerservice.controller.port.AnswerResponse;
+import com.phcworld.boardanswerservice.controller.port.SuccessResponseDto;
 import com.phcworld.boardanswerservice.service.AnswerService;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,8 +29,8 @@ public class AnswerApiController {
 	})
 	@PostMapping("")
 	@ResponseStatus(value = HttpStatus.CREATED)
-	public AnswerResponseDto register(@RequestBody AnswerRequestDto requestDto,
-									  HttpServletRequest request) {
+	public AnswerResponse register(@RequestBody AnswerRequest requestDto,
+								   HttpServletRequest request) {
 		String token = request.getHeader("Authorization");
 		return answerService.register(requestDto, token);
 	}
@@ -39,8 +39,8 @@ public class AnswerApiController {
 			@ApiResponse(responseCode = "404", description = "요청한 답변 없음"),
 	})
 	@GetMapping("/{answerId}")
-	public AnswerResponseDto getFreeBoardAnswer(@PathVariable(name = "answerId") String answerId,
-												HttpServletRequest request) {
+	public AnswerResponse getFreeBoardAnswer(@PathVariable(name = "answerId") String answerId,
+											 HttpServletRequest request) {
 		String token = request.getHeader("Authorization");
 		return answerService.getFreeBoardAnswer(answerId, token);
 	}
@@ -50,8 +50,8 @@ public class AnswerApiController {
 			@ApiResponse(responseCode = "403", description = "수정 권한 없음")
 	})
 	@PatchMapping("")
-	public AnswerResponseDto updateFreeBoardAnswer(@RequestBody AnswerRequestDto requestDto,
-												   HttpServletRequest request) {
+	public AnswerResponse updateFreeBoardAnswer(@RequestBody AnswerRequest requestDto,
+												HttpServletRequest request) {
 		String token = request.getHeader("Authorization");
 		return answerService.updateFreeBoardAnswer(requestDto, token);
 	}
@@ -66,8 +66,8 @@ public class AnswerApiController {
 	}
 
 	@GetMapping("/freeboards/{freeboardId}")
-	public List<AnswerResponseDto> getFreeBoardAnswers(@PathVariable(name = "freeboardId") String freeboardId,
-													   HttpServletRequest request){
+	public List<AnswerResponse> getFreeBoardAnswers(@PathVariable(name = "freeboardId") String freeboardId,
+													HttpServletRequest request){
 		String token = request.getHeader("Authorization");
 		return answerService.getFreeBoardAnswerList(freeboardId, token);
 	}

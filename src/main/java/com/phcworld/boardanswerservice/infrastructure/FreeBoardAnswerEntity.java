@@ -1,5 +1,6 @@
-package com.phcworld.boardanswerservice.domain;
+package com.phcworld.boardanswerservice.infrastructure;
 
+import com.phcworld.boardanswerservice.domain.Answer;
 import com.phcworld.boardanswerservice.utils.LocalDateTimeUtils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,8 +10,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicUpdate;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -26,7 +25,7 @@ import java.time.LocalDateTime;
 		indexes = {@Index(name = "idx__writer_id_create_date", columnList = "writer_id, createDate"),
 		@Index(name = "idx__free_board_id_create_date", columnList = "free_board_id, createDate")})
 @DynamicUpdate
-public class FreeBoardAnswer {
+public class FreeBoardAnswerEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,7 +57,7 @@ public class FreeBoardAnswer {
 	public String getFormattedCreateDate() {
 		return LocalDateTimeUtils.getTime(createDate);
 	}
-	
+
 	public String getFormattedUpdateDate() {
 		return LocalDateTimeUtils.getTime(updateDate);
 	}

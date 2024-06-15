@@ -7,6 +7,6 @@ public class DeletedEntityException extends CustomBaseException{
     }
 
     public DeletedEntityException() {
-        super(ErrorCode.CONFLICT);
+        super(ErrorCode.ALREADY_DELETED);
     }
 }

@@ -20,11 +20,3 @@ spring:
       hibernate.default_batch_fetch_size: 1000
       hibernate:
         format_sql: true
-
-logging:
-  level:
-    com.phcworld: debug
-    org.springframework.security: debug
-
-jwt:
-  secret: c3ByaW5nLXNlY3VyaXR5LWp3dC1waGMtd29ybGQtc2VjcmV0LWtleQ==

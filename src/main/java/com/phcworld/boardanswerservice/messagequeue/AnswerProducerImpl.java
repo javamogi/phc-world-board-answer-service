@@ -2,18 +2,20 @@ package com.phcworld.boardanswerservice.messagequeue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.phcworld.boardanswerservice.domain.FreeBoardAnswer;
-import com.phcworld.boardanswerservice.dto.Field;
-import com.phcworld.boardanswerservice.dto.KafkaAnswerDto;
-import com.phcworld.boardanswerservice.dto.Payload;
-import com.phcworld.boardanswerservice.dto.Schema;
+import com.phcworld.boardanswerservice.domain.Answer;
+import com.phcworld.boardanswerservice.exception.model.InternalServerErrorException;
+import com.phcworld.boardanswerservice.infrastructure.FreeBoardAnswerEntity;
+import com.phcworld.boardanswerservice.messagequeue.port.Field;
+import com.phcworld.boardanswerservice.messagequeue.port.KafkaAnswerDto;
+import com.phcworld.boardanswerservice.messagequeue.port.Payload;
+import com.phcworld.boardanswerservice.messagequeue.port.Schema;
+import com.phcworld.boardanswerservice.service.port.AnswerProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +23,7 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class AnswerProducer {
+public class AnswerProducerImpl {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper mapper;
 
@@ -39,7 +41,7 @@ public class AnswerProducer {
             .name("answers")
             .build();
 
-    public FreeBoardAnswer send(String topic, FreeBoardAnswer answer){
+    public FreeBoardAnswerEntity send(String topic, FreeBoardAnswerEntity answer){
         Payload payload = Payload.builder()
                 .answer_id(answer.getAnswerId())
                 .writer_id(answer.getWriterId())
@@ -57,7 +59,7 @@ public class AnswerProducer {
         try {
             jsonInString = mapper.writeValueAsString(kafkaAnswerDto);
         } catch (JsonProcessingException e){
-            e.printStackTrace();
+            throw new InternalServerErrorException();
         }
 
         kafkaTemplate.send(topic, jsonInString);

@@ -1,18 +1,17 @@
 package com.phcworld.boardanswerservice.service;
 
 import com.phcworld.boardanswerservice.domain.Authority;
-import com.phcworld.boardanswerservice.domain.FreeBoardAnswer;
-import com.phcworld.boardanswerservice.dto.AnswerRequestDto;
-import com.phcworld.boardanswerservice.dto.AnswerResponseDto;
-import com.phcworld.boardanswerservice.dto.SuccessResponseDto;
-import com.phcworld.boardanswerservice.dto.UserResponseDto;
-import com.phcworld.boardanswerservice.exception.model.DuplicationException;
+import com.phcworld.boardanswerservice.infrastructure.FreeBoardAnswerEntity;
+import com.phcworld.boardanswerservice.controller.port.AnswerRequest;
+import com.phcworld.boardanswerservice.controller.port.AnswerResponse;
+import com.phcworld.boardanswerservice.controller.port.SuccessResponseDto;
+import com.phcworld.boardanswerservice.service.port.UserResponse;
 import com.phcworld.boardanswerservice.exception.model.NotFoundException;
 import com.phcworld.boardanswerservice.exception.model.NotMatchUserException;
 import com.phcworld.boardanswerservice.exception.model.UnauthorizedException;
-import com.phcworld.boardanswerservice.messagequeue.AnswerProducer;
-import com.phcworld.boardanswerservice.messagequeue.KafkaProducer;
-import com.phcworld.boardanswerservice.repository.FreeBoardAnswerRepository;
+import com.phcworld.boardanswerservice.messagequeue.AnswerProducerImpl;
+import com.phcworld.boardanswerservice.messagequeue.BoardProducerImpl;
+import com.phcworld.boardanswerservice.infrastructure.FreeBoardAnswerJpaRepository;
 import com.phcworld.boardanswerservice.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +28,13 @@ import java.util.UUID;
 @Slf4j
 public class AnswerService {
 	
-	private final FreeBoardAnswerRepository freeBoardAnswerRepository;
-	private final KafkaProducer kafkaProducer;
-	private final AnswerProducer answerProducer;
+	private final FreeBoardAnswerJpaRepository freeBoardAnswerJpaRepository;
+	private final BoardProducerImpl kafkaProducer;
+	private final AnswerProducerImpl answerProducer;
 	private final WebclientService webclientService;
 
 
-	public AnswerResponseDto register(AnswerRequestDto request, String token) {
+	public AnswerResponse register(AnswerRequest request, String token) {
 
 		boolean existedFreeBoard = webclientService.existFreeBoard(request, token);
 
@@ -43,12 +42,12 @@ public class AnswerService {
 			throw new NotFoundException();
 		}
 		String answerId = UUID.randomUUID().toString();
-		while(freeBoardAnswerRepository.findByAnswerId(answerId).isPresent()){
+		while(freeBoardAnswerJpaRepository.findByAnswerId(answerId).isPresent()){
 			answerId = UUID.randomUUID().toString();
 		}
 
 		String userId = SecurityUtil.getCurrentMemberId();
-		FreeBoardAnswer freeBoardAnswer = FreeBoardAnswer.builder()
+		FreeBoardAnswerEntity freeBoardAnswerEntity = FreeBoardAnswerEntity.builder()
 				.answerId(answerId)
 				.writerId(userId)
 				.freeBoardId(request.boardId())
@@ -57,35 +56,35 @@ public class AnswerService {
 				.build();
 //		freeBoardAnswerRepository.save(freeBoardAnswer);
 
-		kafkaProducer.send("board-topic", freeBoardAnswer);
-		answerProducer.send("answers", freeBoardAnswer);
+		kafkaProducer.send("board-topic", freeBoardAnswerEntity);
+		answerProducer.send("answers", freeBoardAnswerEntity);
 
-		UserResponseDto user = webclientService.getUserResponseDto(token, freeBoardAnswer);
+		UserResponse user = webclientService.getUserResponseDto(token, freeBoardAnswerEntity);
 
-		return AnswerResponseDto.builder()
+		return AnswerResponse.builder()
 				.answerId(answerId)
 				.writer(user)
-				.contents(freeBoardAnswer.getContents())
-				.updatedDate(freeBoardAnswer.getFormattedUpdateDate())
+				.contents(freeBoardAnswerEntity.getContents())
+				.updatedDate(freeBoardAnswerEntity.getFormattedUpdateDate())
 				.build();
 	}
 
-	public AnswerResponseDto getFreeBoardAnswer(String answerId, String token) {
-		FreeBoardAnswer freeBoardAnswer = freeBoardAnswerRepository.findByAnswerId(answerId)
+	public AnswerResponse getFreeBoardAnswer(String answerId, String token) {
+		FreeBoardAnswerEntity freeBoardAnswerEntity = freeBoardAnswerJpaRepository.findByAnswerId(answerId)
 				.orElseThrow(NotFoundException::new);
 
-		UserResponseDto user = webclientService.getUserResponseDto(token, freeBoardAnswer);
+		UserResponse user = webclientService.getUserResponseDto(token, freeBoardAnswerEntity);
 
-		return AnswerResponseDto.builder()
-				.answerId(freeBoardAnswer.getAnswerId())
+		return AnswerResponse.builder()
+				.answerId(freeBoardAnswerEntity.getAnswerId())
 				.writer(user)
-				.contents(freeBoardAnswer.getContents())
-				.updatedDate(freeBoardAnswer.getFormattedUpdateDate())
+				.contents(freeBoardAnswerEntity.getContents())
+				.updatedDate(freeBoardAnswerEntity.getFormattedUpdateDate())
 				.build();
 	}
 
-	public AnswerResponseDto updateFreeBoardAnswer(AnswerRequestDto request, String token) {
-		FreeBoardAnswer answer = freeBoardAnswerRepository.findByAnswerId(request.answerId())
+	public AnswerResponse updateFreeBoardAnswer(AnswerRequest request, String token) {
+		FreeBoardAnswerEntity answer = freeBoardAnswerJpaRepository.findByAnswerId(request.answerId())
 				.orElseThrow(NotFoundException::new);
 		String userId = SecurityUtil.getCurrentMemberId();
 
@@ -96,9 +95,9 @@ public class AnswerService {
 		answer.update(request.contents());
 		answerProducer.send("answers", answer);
 
-		UserResponseDto user = webclientService.getUserResponseDto(token, answer);
+		UserResponse user = webclientService.getUserResponseDto(token, answer);
 
-		return  AnswerResponseDto.builder()
+		return  AnswerResponse.builder()
 				.answerId(answer.getAnswerId())
 				.writer(user)
 				.contents(answer.getContents())
@@ -107,17 +106,17 @@ public class AnswerService {
 	}
 
 	public SuccessResponseDto deleteFreeBoardAnswer(String answerId) {
-		FreeBoardAnswer freeBoardAnswer = freeBoardAnswerRepository.findByAnswerId(answerId)
+		FreeBoardAnswerEntity freeBoardAnswerEntity = freeBoardAnswerJpaRepository.findByAnswerId(answerId)
 				.orElseThrow(NotFoundException::new);
 		String userId = SecurityUtil.getCurrentMemberId();
 		Authority authorities = SecurityUtil.getAuthorities();
-		if(!freeBoardAnswer.isSameWriter(userId) && authorities != Authority.ROLE_ADMIN) {
+		if(!freeBoardAnswerEntity.isSameWriter(userId) && authorities != Authority.ROLE_ADMIN) {
 			throw new UnauthorizedException();
 		}
 
 //		freeBoardAnswerRepository.delete(freeBoardAnswer);
 
-		answerProducer.send("answers", freeBoardAnswer);
+		answerProducer.send("answers", freeBoardAnswerEntity);
 		
 		return SuccessResponseDto.builder()
 				.message("삭제성공")
@@ -125,17 +124,17 @@ public class AnswerService {
 				.build();
 	}
 
-	public List<AnswerResponseDto> getFreeBoardAnswerList(String boardId, String token) {
-		List<FreeBoardAnswer> freeBoardAnswers = freeBoardAnswerRepository.findByFreeBoardId(boardId);
+	public List<AnswerResponse> getFreeBoardAnswerList(String boardId, String token) {
+		List<FreeBoardAnswerEntity> freeBoardAnswerEntities = freeBoardAnswerJpaRepository.findByFreeBoardId(boardId);
 
-		List<String> userIds = freeBoardAnswers.stream()
-				.map(FreeBoardAnswer::getWriterId)
+		List<String> userIds = freeBoardAnswerEntities.stream()
+				.map(FreeBoardAnswerEntity::getWriterId)
 				.distinct()
 				.toList();
 
-		Map<String, UserResponseDto> users = webclientService.getUserResponseDtoMap(token, userIds);
+		Map<String, UserResponse> users = webclientService.getUserResponseDtoMap(token, userIds);
 
-		UserResponseDto user = UserResponseDto.builder()
+		UserResponse user = UserResponse.builder()
 				.email("")
 				.name("")
 				.createDate("")
@@ -143,9 +142,9 @@ public class AnswerService {
 				.userId("")
 				.build();
 
-		return freeBoardAnswers.stream()
+		return freeBoardAnswerEntities.stream()
 				.map(a -> {
-					return AnswerResponseDto.builder()
+					return AnswerResponse.builder()
 							.answerId(a.getAnswerId())
 							.writer(users.isEmpty() ? user : users.get(a.getWriterId()))
 							.contents(a.getContents())
