@@ -38,7 +38,7 @@ public class AnswerServiceImpl implements AnswerService {
 		String userId = SecurityUtil.getCurrentMemberId();
 		Answer answer = Answer.from(request, userId, uuidHolder, timeHolder);
 
-		boardProducer.send("board-topic", answer);
+//		boardProducer.send("board-topic", answer);
 
 		return answerProducer.send("answers", answer);
 	}
