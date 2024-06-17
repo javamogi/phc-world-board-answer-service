@@ -53,6 +53,9 @@ public class AnswerServiceImpl implements AnswerService {
 	public Answer update(AnswerRequest request) {
 		Answer answer = answerRepository.findByAnswerId(request.answerId())
 				.orElseThrow(NotFoundException::new);
+		if(answer.isDeleted()){
+			throw new DeletedEntityException();
+		}
 		String userId = SecurityUtil.getCurrentMemberId();
 
 		if(!answer.matchWriter(userId)){
