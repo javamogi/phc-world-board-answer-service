@@ -27,6 +27,6 @@ kafka:
 user_service:
   url: http://localhost:8080/users
 board_service:
-  url: http://localhost:8080/freeboards
+  url: http://localhost:8081/freeboards
 jwt:
   secret: spring-boot-security-test-secret-key-dev
