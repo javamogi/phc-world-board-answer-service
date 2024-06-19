@@ -36,8 +36,9 @@ public class AnswerApiController {
 	@ResponseStatus(value = HttpStatus.CREATED)
 	public ResponseEntity<AnswerResponse> register(@RequestBody AnswerRequest requestDto,
 												  @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+		webClientService.existBoard(token, requestDto);
+		UserResponse user = webClientService.getUser(token, null);
 		Answer answer = answerService.register(requestDto);
-		UserResponse user = webClientService.getUser(token, answer);
 		return ResponseEntity
 				.status(HttpStatus.CREATED)
 				.body(AnswerResponse.of(answer, user));
@@ -47,8 +48,8 @@ public class AnswerApiController {
 			@ApiResponse(responseCode = "404", description = "요청한 답변 없음"),
 	})
 	@GetMapping("/{answerId}")
-	public ResponseEntity<AnswerResponse> getFreeBoardAnswer(@PathVariable(name = "answerId") String answerId,
-											 @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+	public ResponseEntity<AnswerResponse> getAnswer(@PathVariable(name = "answerId") String answerId,
+													@RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
 		Answer answer = answerService.getAnswer(answerId);
 		UserResponse user = webClientService.getUser(token, answer);
 		return ResponseEntity
@@ -61,8 +62,8 @@ public class AnswerApiController {
 			@ApiResponse(responseCode = "403", description = "수정 권한 없음")
 	})
 	@PatchMapping("")
-	public ResponseEntity<AnswerResponse> updateFreeBoardAnswer(@RequestBody AnswerRequest requestDto,
-												@RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+	public ResponseEntity<AnswerResponse> update(@RequestBody AnswerRequest requestDto,
+												 @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
 
 		Answer answer = answerService.update(requestDto);
 		UserResponse user = webClientService.getUser(token, answer);
@@ -76,8 +77,8 @@ public class AnswerApiController {
 			@ApiResponse(responseCode = "403", description = "삭제 권한 없음")
 	})
 	@DeleteMapping("/{answerId}")
-	public ResponseEntity<AnswerResponse> deleteFreeBoardAnswer(@PathVariable(name = "answerId") String answerId,
-																@RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+	public ResponseEntity<AnswerResponse> delete(@PathVariable(name = "answerId") String answerId,
+												 @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
 		Answer answer = answerService.delete(answerId);
 		UserResponse user = webClientService.getUser(token, answer);
 		return ResponseEntity
@@ -86,8 +87,8 @@ public class AnswerApiController {
 	}
 
 	@GetMapping("/freeboards/{freeboardId}")
-	public ResponseEntity<List<AnswerResponse>> getFreeBoardAnswers(@PathVariable(name = "freeboardId") Long freeboardId,
-													@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+	public ResponseEntity<List<AnswerResponse>> getAnswersByBoardId(@PathVariable(name = "freeboardId") Long freeboardId,
+																	@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
 		List<Answer> answers = answerService.getAnswerList(freeboardId);
 
 		Map<String, UserResponse> users = webClientService.getUsersMap(token, answers);
@@ -95,9 +96,10 @@ public class AnswerApiController {
 				.map(answer -> {
 					return AnswerResponse.builder()
 							.answerId(answer.getAnswerId())
-							.writer(users != null ? users.get(answer.getWriterId()) : null)
+							.writer(!users.isEmpty() ? users.get(answer.getWriterId()) : null)
 							.contents(answer.getContents())
 							.updatedDate(LocalDateTimeUtils.getTime(answer.getUpdateDate()))
+							.boardId(answer.getFreeBoardId())
 							.isDeleted(answer.isDeleted())
 							.build();
 				})

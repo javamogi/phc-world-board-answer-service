@@ -11,6 +11,7 @@ import lombok.Builder;
 public record AnswerResponse(
         String answerId,
         UserResponse writer,
+        Long boardId,
         String contents,
         String updatedDate,
         boolean isDeleted
@@ -21,6 +22,7 @@ public record AnswerResponse(
                 .writer(user)
                 .contents(answer.getContents())
                 .updatedDate(LocalDateTimeUtils.getTime(answer.getUpdateDate()))
+                .boardId(answer.getFreeBoardId())
                 .isDeleted(answer.isDeleted())
                 .build();
     }
