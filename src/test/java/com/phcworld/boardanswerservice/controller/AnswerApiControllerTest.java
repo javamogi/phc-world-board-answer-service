@@ -38,98 +38,64 @@ class AnswerApiControllerTest {
                 .boardId(1L)
                 .contents("contents")
                 .build();
-        Authentication authentication = new FakeAuthentication("user-id", "password", Authority.ROLE_USER).getAuthentication();
+        Authentication authentication = new FakeAuthentication("1111", "password", Authority.ROLE_USER).getAuthentication();
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // when
-        ResponseEntity<AnswerResponse> result = testContainer.answerApiController.register(requestDto, "token");
+        ResponseEntity<AnswerResponse> result = testContainer.answerApiController.register(requestDto, "1111");
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(201));
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().contents()).isEqualTo("contents");
-        assertThat(result.getBody().writer().email()).isEqualTo("test0@test.test");
+        assertThat(result.getBody().writer().userId()).isEqualTo("1111");
         assertThat(result.getBody().answerId()).isEqualTo("answer-id");
         assertThat(result.getBody().isDeleted()).isFalse();
     }
 
-//    @Test
-//    @DisplayName("가입하지 않은 회원은 게시글의 답변을 등록할 수 업다")
-//    void failedRegisterWhenNotFoundUser() {
-//        // given
-//        LocalDateTime time = LocalDateTime.of(2024, 3, 13, 11, 11, 11, 111111);
-//        TestContainer testContainer = TestContainer.builder()
-//                .localDateTimeHolder(() -> time)
-//                .build();
-//        User user = User.builder()
-//                .id(1L)
-//                .email("test@test.test")
-//                .name("테스트")
-//                .password("test2")
-//                .isDeleted(false)
-//                .authority(Authority.ROLE_USER)
-//                .profileImage("blank-profile-picture.png")
-//                .createDate(time)
-//                .build();
-//        testContainer.userRepository.save(user);
-//        FreeBoard freeBoard = FreeBoard.builder()
-//                .id(1L)
-//                .title("제목")
-//                .contents("내용")
-//                .countOfAnswer(0)
-//                .count(0)
-//                .writer(user)
-//                .createDate(time)
-//                .updateDate(time)
-//                .isDeleted(false)
-//                .build();
-//        testContainer.freeBoardRepository.save(freeBoard);
-//        FreeBoardAnswerRequest requestDto = FreeBoardAnswerRequest.builder()
-//                .boardId(1L)
-//                .contents("contents")
-//                .build();
-//        Authentication authentication = new FakeAuthentication(2, Authority.ROLE_USER).getAuthentication();
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//        // when
-//        // then
-//        assertThatThrownBy(() -> {
-//            testContainer.freeBoardAnswerApiController.register(requestDto);
-//        }).isInstanceOf(NotFoundException.class);
-//    }
-//
-//    @Test
-//    @DisplayName("회원은 존재하지 않는 게시글의 답변을 등록할 수 없다")
-//    void failedRegisterWhenNotFoundFreeBoard() {
-//        // given
-//        LocalDateTime time = LocalDateTime.of(2024, 3, 13, 11, 11, 11, 111111);
-//        TestContainer testContainer = TestContainer.builder()
-//                .localDateTimeHolder(() -> time)
-//                .build();
-//        User user = User.builder()
-//                .id(1L)
-//                .email("test@test.test")
-//                .name("테스트")
-//                .password("test2")
-//                .isDeleted(false)
-//                .authority(Authority.ROLE_USER)
-//                .profileImage("blank-profile-picture.png")
-//                .createDate(time)
-//                .build();
-//        testContainer.userRepository.save(user);
-//        FreeBoardAnswerRequest requestDto = FreeBoardAnswerRequest.builder()
-//                .boardId(1L)
-//                .contents("contents")
-//                .build();
-//        Authentication authentication = new FakeAuthentication(1, Authority.ROLE_USER).getAuthentication();
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//        // when
-//        // then
-//        assertThatThrownBy(() -> {
-//            testContainer.freeBoardAnswerApiController.register(requestDto);
-//        }).isInstanceOf(NotFoundException.class);
-//    }
+    @Test
+    @DisplayName("가입하지 않은 회원은 게시글의 답변을 등록할 수 없다")
+    void failedRegisterWhenNotFoundUser() {
+        // given
+        LocalDateTime time = LocalDateTime.of(2024, 3, 13, 11, 11, 11, 111111);
+        TestContainer testContainer = TestContainer.builder()
+                .localDateTimeHolder(() -> time)
+                .build();
+        AnswerRequest requestDto = AnswerRequest.builder()
+                .boardId(1L)
+                .contents("contents")
+                .build();
+        Authentication authentication = new FakeAuthentication("9999","temp", Authority.ROLE_USER).getAuthentication();
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // when
+        // then
+        assertThatThrownBy(() -> {
+            testContainer.answerApiController.register(requestDto, "9999");
+        }).isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("회원은 존재하지 않는 게시글의 답변을 등록할 수 없다")
+    void failedRegisterWhenNotFoundFreeBoard() {
+        // given
+        LocalDateTime time = LocalDateTime.of(2024, 3, 13, 11, 11, 11, 111111);
+        TestContainer testContainer = TestContainer.builder()
+                .localDateTimeHolder(() -> time)
+                .build();
+        AnswerRequest requestDto = AnswerRequest.builder()
+                .boardId(999L)
+                .contents("contents")
+                .build();
+        Authentication authentication = new FakeAuthentication("1111","test", Authority.ROLE_USER).getAuthentication();
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // when
+        // then
+        assertThatThrownBy(() -> {
+            testContainer.answerApiController.register(requestDto, "1111");
+        }).isInstanceOf(NotFoundException.class);
+    }
 
     @Test
     @DisplayName("회원은 본인이 작성한 답변을 수정할 수 있다")
@@ -143,7 +109,7 @@ class AnswerApiControllerTest {
                         .id(1L)
                         .answerId("answer-id-1")
                         .freeBoardId(1L)
-                        .writerId("user-id")
+                        .writerId("1111")
                         .contents("contents")
                         .createDate(time)
                         .updateDate(time)
@@ -153,11 +119,11 @@ class AnswerApiControllerTest {
                 .answerId("answer-id-1")
                 .contents("내용으로 수정")
                 .build();
-        Authentication authentication = new FakeAuthentication("user-id", "password", Authority.ROLE_USER).getAuthentication();
+        Authentication authentication = new FakeAuthentication("1111", "password", Authority.ROLE_USER).getAuthentication();
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // when
-        ResponseEntity<AnswerResponse> result = testContainer.answerApiController.updateFreeBoardAnswer(requestDto, "token");
+        ResponseEntity<AnswerResponse> result = testContainer.answerApiController.update(requestDto, "1111");
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
@@ -165,7 +131,7 @@ class AnswerApiControllerTest {
         assertThat(result.getBody().answerId()).isEqualTo("answer-id-1");
         assertThat(result.getBody().contents()).isEqualTo("내용으로 수정");
         assertThat(result.getBody().updatedDate()).isEqualTo(LocalDateTimeUtils.getTime(time));
-        assertThat(result.getBody().writer().email()).isEqualTo("test0@test.test");
+        assertThat(result.getBody().writer().userId()).isEqualTo("1111");
         assertThat(result.getBody().isDeleted()).isFalse();
     }
 
@@ -187,7 +153,7 @@ class AnswerApiControllerTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            testContainer.answerApiController.updateFreeBoardAnswer(requestDto, "token");
+            testContainer.answerApiController.update(requestDto, "token");
         }).isInstanceOf(NotFoundException.class);
     }
 
@@ -219,7 +185,7 @@ class AnswerApiControllerTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            testContainer.answerApiController.updateFreeBoardAnswer(requestDto, "token");
+            testContainer.answerApiController.update(requestDto, "token");
         }).isInstanceOf(ForbiddenException.class);
     }
 
@@ -235,26 +201,26 @@ class AnswerApiControllerTest {
                 .id(1L)
                 .answerId("answer-id-1")
                 .freeBoardId(1L)
-                .writerId("user-id")
+                .writerId("1111")
                 .contents("contents")
                 .createDate(time)
                 .updateDate(time)
                 .isDeleted(false)
                 .build());
         Authentication authentication =
-                new FakeAuthentication("user-id","test", Authority.ROLE_USER).getAuthentication();
+                new FakeAuthentication("1111","test", Authority.ROLE_USER).getAuthentication();
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // when
         ResponseEntity<AnswerResponse> result = testContainer
                 .answerApiController
-                .deleteFreeBoardAnswer("answer-id-1", "token");
+                .delete("answer-id-1", "1111");
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().updatedDate()).isEqualTo(LocalDateTimeUtils.getTime(time));
-        assertThat(result.getBody().writer().email()).isEqualTo("test0@test.test");
+        assertThat(result.getBody().writer().userId()).isEqualTo("1111");
         assertThat(result.getBody().isDeleted()).isTrue();
     }
 
@@ -280,13 +246,13 @@ class AnswerApiControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // when
-        ResponseEntity<AnswerResponse> result = testContainer.answerApiController.deleteFreeBoardAnswer("answer-id-1", "token");
+        ResponseEntity<AnswerResponse> result = testContainer.answerApiController.delete("answer-id-1", "admin");
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().updatedDate()).isEqualTo(LocalDateTimeUtils.getTime(time));
-        assertThat(result.getBody().writer().email()).isEqualTo("test0@test.test");
+        assertThat(result.getBody().writer().userId()).isEqualTo("admin");
         assertThat(result.getBody().isDeleted()).isTrue();
     }
 
@@ -304,7 +270,7 @@ class AnswerApiControllerTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            testContainer.answerApiController.deleteFreeBoardAnswer("answer-id-00", "token");
+            testContainer.answerApiController.delete("answer-id-00", "token");
         }).isInstanceOf(NotFoundException.class);
     }
 
@@ -332,7 +298,7 @@ class AnswerApiControllerTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            testContainer.answerApiController.deleteFreeBoardAnswer("answer-id-1", "token");
+            testContainer.answerApiController.delete("answer-id-1", "token");
         }).isInstanceOf(ForbiddenException.class);
     }
 
@@ -378,7 +344,7 @@ class AnswerApiControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // when
-        ResponseEntity<List<AnswerResponse>> result = testContainer.answerApiController.getFreeBoardAnswers(1L, "token");
+        ResponseEntity<List<AnswerResponse>> result = testContainer.answerApiController.getAnswersByBoardId(1L, "token");
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
