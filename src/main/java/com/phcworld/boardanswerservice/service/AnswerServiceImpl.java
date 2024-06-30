@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,6 +29,7 @@ public class AnswerServiceImpl implements AnswerService {
 	private final UuidHolder uuidHolder;
 
 	@Override
+	@Transactional
 	public Answer register(AnswerRequest request) {
 
 //		String answerId = UUID.randomUUID().toString();
@@ -44,12 +46,14 @@ public class AnswerServiceImpl implements AnswerService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Answer getAnswer(String answerId) {
 		return answerRepository.findByAnswerId(answerId)
 				.orElseThrow(NotFoundException::new);
 	}
 
 	@Override
+	@Transactional
 	public Answer update(AnswerRequest request) {
 		Answer answer = answerRepository.findByAnswerId(request.answerId())
 				.orElseThrow(NotFoundException::new);
@@ -68,6 +72,7 @@ public class AnswerServiceImpl implements AnswerService {
 	}
 
 	@Override
+	@Transactional
 	public Answer delete(String answerId) {
 		Answer answer = answerRepository.findByAnswerId(answerId)
 				.orElseThrow(NotFoundException::new);
@@ -84,6 +89,7 @@ public class AnswerServiceImpl implements AnswerService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<Answer> getAnswerList(Long boardId) {
 		return answerRepository.findByFreeBoardIdAndIsDeleted(boardId, false);
 	}
