@@ -1,0 +1,41 @@
+spring:
+  cloud:
+    bus:
+      enabled: false
+  datasource:
+    master:
+      jdbc-url: jdbc:mysql://localhost:3306/test?rewriteBatchedStatements=true&profileSQL=true&logger=Slf4JLogger&maxQuerySizeToLog=999999&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      username: root
+      password: root
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    slave:
+      jdbc-url: jdbc:mysql://localhost:3307/test?rewriteBatchedStatements=true&profileSQL=true&logger=Slf4JLogger&maxQuerySizeToLog=999999&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      username: root
+      password: root
+      driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate.default_batch_fetch_size: 1000
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+#      database: 1
+
+file:
+  path: src/main/resources/static/image/
+
+eureka:
+  client:
+    enabled: false
+management:
+  health:
+    rabbit:
+      enabled: false
