@@ -1,6 +1,7 @@
 package com.phcworld.boardanswerservice.mock;
 
-import com.phcworld.boardanswerservice.controller.AnswerApiController;
+import com.phcworld.boardanswerservice.controller.AnswerQueryApiController;
+import com.phcworld.boardanswerservice.controller.AnswerCommandApiController;
 import com.phcworld.boardanswerservice.controller.port.AnswerService;
 import com.phcworld.boardanswerservice.controller.port.WebClientService;
 import com.phcworld.boardanswerservice.service.AnswerServiceImpl;
@@ -13,8 +14,10 @@ public class TestContainer {
     public final BoardProducer boardProducer;
     public final AnswerProducer answerProducer;
     public final AnswerService answerService;
-    public final AnswerApiController answerApiController;
+    public final AnswerQueryApiController answerQueryApiController;
     public final WebClientService webClientService;
+
+    public final AnswerCommandApiController answerCommandApiController;
 
     @Builder
     public TestContainer(LocalDateTimeHolder localDateTimeHolder, UuidHolder uuidHolder){
@@ -29,7 +32,11 @@ public class TestContainer {
                 .answerProducer(answerProducer)
                 .answerRepository(answerRepository)
                 .build();
-        this.answerApiController = AnswerApiController.builder()
+        this.answerCommandApiController = AnswerCommandApiController.builder()
+                .answerService(answerService)
+                .webClientService(webClientService)
+                .build();
+        this.answerQueryApiController = AnswerQueryApiController.builder()
                 .answerService(answerService)
                 .webClientService(webClientService)
                 .build();

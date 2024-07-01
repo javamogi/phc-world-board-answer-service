@@ -39,7 +39,7 @@ public class FakeWebClientService implements WebClientService {
         users.add(user3);
 
         boards.add(BoardResponse.builder()
-                        .boardId(1L)
+                        .id(1L)
                         .writer("1111")
                         .title("제목")
                         .contents("제목")
@@ -76,7 +76,7 @@ public class FakeWebClientService implements WebClientService {
     @Override
     public BoardResponse existBoard(String token, AnswerRequest request) {
         return boards.stream()
-                .filter(board -> board.boardId().equals(request.boardId()))
+                .filter(board -> board.id().equals(request.boardId()))
                 .findAny()
                 .orElseThrow(NotFoundException::new);
     }

@@ -18,12 +18,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 
-class AnswerApiControllerTest {
+class AnswerCommandApiControllerTest {
 
     @Test
     @DisplayName("회원은 게시글의 답변을 등록할 수 있다")
@@ -42,7 +42,7 @@ class AnswerApiControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // when
-        ResponseEntity<AnswerResponse> result = testContainer.answerApiController.register(requestDto, "1111");
+        ResponseEntity<AnswerResponse> result = testContainer.answerCommandApiController.register(requestDto, "1111");
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(201));
@@ -71,7 +71,7 @@ class AnswerApiControllerTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            testContainer.answerApiController.register(requestDto, "9999");
+            testContainer.answerCommandApiController.register(requestDto, "9999");
         }).isInstanceOf(NotFoundException.class);
     }
 
@@ -93,7 +93,7 @@ class AnswerApiControllerTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            testContainer.answerApiController.register(requestDto, "1111");
+            testContainer.answerCommandApiController.register(requestDto, "1111");
         }).isInstanceOf(NotFoundException.class);
     }
 
@@ -106,15 +106,15 @@ class AnswerApiControllerTest {
                 .localDateTimeHolder(() -> time)
                 .build();
         testContainer.answerRepository.save(Answer.builder()
-                        .id(1L)
-                        .answerId("answer-id-1")
-                        .freeBoardId(1L)
-                        .writerId("1111")
-                        .contents("contents")
-                        .createDate(time)
-                        .updateDate(time)
-                        .isDeleted(false)
-                        .build());
+                .id(1L)
+                .answerId("answer-id-1")
+                .freeBoardId(1L)
+                .writerId("1111")
+                .contents("contents")
+                .createDate(time)
+                .updateDate(time)
+                .isDeleted(false)
+                .build());
         AnswerRequest requestDto = AnswerRequest.builder()
                 .answerId("answer-id-1")
                 .contents("내용으로 수정")
@@ -123,7 +123,7 @@ class AnswerApiControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // when
-        ResponseEntity<AnswerResponse> result = testContainer.answerApiController.update(requestDto, "1111");
+        ResponseEntity<AnswerResponse> result = testContainer.answerCommandApiController.update(requestDto, "1111");
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
@@ -153,7 +153,7 @@ class AnswerApiControllerTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            testContainer.answerApiController.update(requestDto, "token");
+            testContainer.answerCommandApiController.update(requestDto, "token");
         }).isInstanceOf(NotFoundException.class);
     }
 
@@ -185,7 +185,7 @@ class AnswerApiControllerTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            testContainer.answerApiController.update(requestDto, "token");
+            testContainer.answerCommandApiController.update(requestDto, "token");
         }).isInstanceOf(ForbiddenException.class);
     }
 
@@ -213,7 +213,7 @@ class AnswerApiControllerTest {
 
         // when
         ResponseEntity<AnswerResponse> result = testContainer
-                .answerApiController
+                .answerCommandApiController
                 .delete("answer-id-1", "1111");
 
         // then
@@ -246,7 +246,7 @@ class AnswerApiControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // when
-        ResponseEntity<AnswerResponse> result = testContainer.answerApiController.delete("answer-id-1", "admin");
+        ResponseEntity<AnswerResponse> result = testContainer.answerCommandApiController.delete("answer-id-1", "admin");
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
@@ -270,7 +270,7 @@ class AnswerApiControllerTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            testContainer.answerApiController.delete("answer-id-00", "token");
+            testContainer.answerCommandApiController.delete("answer-id-00", "token");
         }).isInstanceOf(NotFoundException.class);
     }
 
@@ -298,57 +298,8 @@ class AnswerApiControllerTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            testContainer.answerApiController.delete("answer-id-1", "token");
+            testContainer.answerCommandApiController.delete("answer-id-1", "token");
         }).isInstanceOf(ForbiddenException.class);
     }
 
-    @Test
-    @DisplayName("게시글 ID로 게시글 답변 목록을 가져올 수 있다.")
-    void getAnswersByBoardId() {
-        // given
-        LocalDateTime time = LocalDateTime.of(2024, 6, 15, 11, 11, 11, 111111);
-        TestContainer testContainer = TestContainer.builder()
-                .localDateTimeHolder(() -> time)
-                .build();
-        testContainer.answerRepository.save(Answer.builder()
-                .id(1L)
-                .answerId("answer-id-1")
-                .freeBoardId(1L)
-                .writerId("user-id")
-                .contents("contents")
-                .createDate(time)
-                .updateDate(time)
-                .isDeleted(false)
-                .build());
-        testContainer.answerRepository.save(Answer.builder()
-                .id(2L)
-                .answerId("answer-id-2")
-                .freeBoardId(1L)
-                .writerId("user-id")
-                .contents("contents2")
-                .createDate(time)
-                .updateDate(time)
-                .isDeleted(false)
-                .build());
-        testContainer.answerRepository.save(Answer.builder()
-                .id(3L)
-                .answerId("answer-id-2")
-                .freeBoardId(2L)
-                .writerId("user-id")
-                .contents("contents2")
-                .createDate(time)
-                .updateDate(time)
-                .isDeleted(false)
-                .build());
-        Authentication authentication = new FakeAuthentication("user-id", "password", Authority.ROLE_USER).getAuthentication();
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        // when
-        ResponseEntity<List<AnswerResponse>> result = testContainer.answerApiController.getAnswersByBoardId(1L, "token");
-
-        // then
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
-        assertThat(result.getBody()).isNotNull();
-        assertThat(result.getBody()).hasSize(2);
-    }
 }
