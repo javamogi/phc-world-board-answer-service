@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @Builder
 public class Payload {
+    private Long id;
     private String answer_id;
     private String writer_id;
     private Long free_board_id;
