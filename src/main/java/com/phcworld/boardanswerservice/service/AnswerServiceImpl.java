@@ -42,7 +42,7 @@ public class AnswerServiceImpl implements AnswerService {
 
 //		boardProducer.send("board-topic", answer);
 
-		return answerProducer.send("answers", answer);
+		return answerProducer.send("answers", answer, false);
 	}
 
 	@Override
@@ -68,7 +68,7 @@ public class AnswerServiceImpl implements AnswerService {
 
 		answer = answer.update(request.contents());
 
-		return answerProducer.send("answers", answer);
+		return answerProducer.send("answers", answer, true);
 	}
 
 	@Override
@@ -85,7 +85,7 @@ public class AnswerServiceImpl implements AnswerService {
 			throw new ForbiddenException();
 		}
 		answer = answer.delete();
-		return answerProducer.send("answers", answer);
+		return answerProducer.send("answers", answer, true);
 	}
 
 	@Override

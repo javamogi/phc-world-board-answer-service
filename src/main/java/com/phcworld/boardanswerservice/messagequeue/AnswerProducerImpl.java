@@ -26,29 +26,42 @@ public class AnswerProducerImpl implements AnswerProducer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper mapper;
 
-    List<Field> fields = Arrays.asList(
-            new Field("int8", false, "is_deleted"),
-            new Field("string", false, "answer_id"),
-            new Field("string", false, "writer_id"),
-            new Field("int64", false, "free_board_id"),
-            new Field("string", false, "contents"),
-            new Field("string", false, "update_date"));
-    Schema schema = Schema.builder()
-            .type("struct")
-            .fields(fields)
-            .optional(false)
-            .name("answers")
-            .build();
 
     @Override
-    public Answer send(String topic, Answer answer){
+    public Answer send(String topic, Answer answer, boolean isUpdate){
         Payload payload = Payload.builder()
+                .id(answer.getId())
                 .answer_id(answer.getAnswerId())
                 .writer_id(answer.getWriterId())
                 .free_board_id(answer.getFreeBoardId())
                 .contents(answer.getContents())
                 .update_date(answer.getUpdateDate().withNano(0).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")))
                 .is_deleted((byte)(Boolean.TRUE.equals(answer.isDeleted()) ? 1 : 0))
+                .build();
+        List<Field> fields;
+        if(isUpdate){
+            fields = Arrays.asList(
+                    new Field("int64", false, "id"),
+                    new Field("int8", false, "is_deleted"),
+                    new Field("string", false, "answer_id"),
+                    new Field("string", false, "writer_id"),
+                    new Field("int64", false, "free_board_id"),
+                    new Field("string", false, "contents"),
+                    new Field("string", false, "update_date"));
+        } else {
+            fields = Arrays.asList(
+                    new Field("int8", false, "is_deleted"),
+                    new Field("string", false, "answer_id"),
+                    new Field("string", false, "writer_id"),
+                    new Field("int64", false, "free_board_id"),
+                    new Field("string", false, "contents"),
+                    new Field("string", false, "update_date"));
+        }
+        Schema schema = Schema.builder()
+                .type("struct")
+                .fields(fields)
+                .optional(false)
+                .name("answers")
                 .build();
 
         KafkaAnswerDto kafkaAnswerDto = KafkaAnswerDto.builder()

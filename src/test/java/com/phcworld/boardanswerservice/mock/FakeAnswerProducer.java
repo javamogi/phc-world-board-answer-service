@@ -5,7 +5,7 @@ import com.phcworld.boardanswerservice.service.port.AnswerProducer;
 
 public class FakeAnswerProducer implements AnswerProducer {
     @Override
-    public Answer send(String topic, Answer answer) {
+    public Answer send(String topic, Answer answer, boolean isUpdate) {
         return answer;
     }
 }
