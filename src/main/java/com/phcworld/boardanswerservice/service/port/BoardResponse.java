@@ -7,7 +7,7 @@ import lombok.Builder;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record BoardResponse(
-        Long boardId,
+        Long id,
         String writer,
         String title,
         String contents,
