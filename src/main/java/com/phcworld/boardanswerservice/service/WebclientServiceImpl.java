@@ -58,7 +58,8 @@ public class WebclientServiceImpl implements WebClientService {
                         .build(finalUserId))
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.just(new NotFoundException()))
+                .onStatus(HttpStatusCode::is4xxClientError,
+                        clientResponse -> Mono.just(new NotFoundException(ErrorCode.USER_NOT_FOUND)))
                 .bodyToMono(UserResponse.class)
                 .block();
     }
